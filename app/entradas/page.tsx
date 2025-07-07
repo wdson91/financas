@@ -158,8 +158,7 @@ export default function EntradasPage() {
       return
     }
 
-    const income: Income = {
-      id: '',
+    const income = {
       name: newIncome.name,
       amount: Number.parseFloat(newIncome.amount),
       category: newIncome.category,

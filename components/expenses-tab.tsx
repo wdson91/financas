@@ -369,16 +369,15 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     expenseHistory.addExpenseName(newExpense.name)
     setExpenseSuggestions(expenseHistory.getExpenseNames())
 
-    const expense: Expense = {
-      id: '',
-      name: newExpense.name,
-      amount: Number.parseFloat(newExpense.amount),
-      category: newExpense.category,
-      date: newExpense.date,
-      payer: newExpense.payer,
-      user_id: user.id,
-      observations: newExpense.observations,
-    }
+          const expense = {
+        name: newExpense.name,
+        amount: Number.parseFloat(newExpense.amount),
+        category: newExpense.category,
+        date: newExpense.date,
+        payer: newExpense.payer,
+        user_id: user.id,
+        observations: newExpense.observations,
+      }
 
     if (isUsingSupabase) {
       const { error } = await supabase.from("expenses").insert([expense])
@@ -424,19 +423,18 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     expenseHistory.addExpenseName(newUpcomingExpense.name)
     setExpenseSuggestions(expenseHistory.getExpenseNames())
 
-    const upcomingExpense: UpcomingExpense = {
-      id: '',
-      name: newUpcomingExpense.name,
-      amount: Number.parseFloat(newUpcomingExpense.amount),
-      category: newUpcomingExpense.category,
-      due_date: newUpcomingExpense.due_date,
-      payer: newUpcomingExpense.payer,
-      user_id: user.id,
-      is_paid: false,
-      is_monthly: newUpcomingExpense.is_monthly,
-      created_at: new Date().toISOString(),
-      observations: newUpcomingExpense.observations,
-    }
+          const upcomingExpense = {
+        name: newUpcomingExpense.name,
+        amount: Number.parseFloat(newUpcomingExpense.amount),
+        category: newUpcomingExpense.category,
+        due_date: newUpcomingExpense.due_date,
+        payer: newUpcomingExpense.payer,
+        user_id: user.id,
+        is_paid: false,
+        is_monthly: newUpcomingExpense.is_monthly,
+        created_at: new Date().toISOString(),
+        observations: newUpcomingExpense.observations,
+      }
 
 
 
@@ -505,8 +503,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
 
   const markAsPaid = async (upcomingExpenseId: string, upcomingExpense: UpcomingExpense) => {
     // Criar uma despesa normal
-    const expense: Expense = {
-      id: '',
+    const expense = {
       name: upcomingExpense.name,
       amount: upcomingExpense.amount,
       category: upcomingExpense.category,
