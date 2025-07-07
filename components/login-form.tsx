@@ -129,7 +129,7 @@ export function LoginForm({
               <div className="mt-4 p-3 bg-green-50 rounded-md">
                 <p className="text-xs text-green-700 text-center">
                   <strong>Primeira vez?</strong><br />
-                  Clique em "Cadastrar" para criar sua conta
+                  Clique em &quot;Cadastrar&quot; para criar sua conta
                 </p>
               </div>
             </TabsContent>

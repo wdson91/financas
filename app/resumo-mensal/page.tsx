@@ -4,10 +4,9 @@ import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, User, Repeat, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Repeat, User } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/auth-wrapper"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface MonthlyExpense {
   id: string

@@ -78,7 +78,7 @@ export function AutocompleteInput({
     }
   }
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleBlur = () => {
     // Delay closing to allow clicking on suggestions
     setTimeout(() => setIsOpen(false), 150)
   }

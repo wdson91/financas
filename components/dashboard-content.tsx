@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { PiggyBank, ShoppingCart, TrendingUp, Target, DollarSign, User, LogOut, Clock, Calendar } from "lucide-react"
+import { PiggyBank, ShoppingCart, TrendingUp, Target, DollarSign, User, LogOut, Clock, Calendar, TrendingDown } from "lucide-react"
 import { ExpensesTab } from "@/components/expenses-tab"
 import { GoalsTab } from "@/components/goals-tab"
 import { ShoppingListTab } from "@/components/shopping-list-tab"
@@ -13,11 +13,89 @@ import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/auth-wrapper"
 
 export function DashboardContent() {
-  const { user } = useAuth()
+  const { user, isUsingSupabase } = useAuth()
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [pendingTotal, setPendingTotal] = useState(0)
-  const [monthlyGoal, setMonthlyGoal] = useState(3000)
+  const [totalIncomes, setTotalIncomes] = useState(0)
   const [shoppingItems, setShoppingItems] = useState(0)
+
+  const fetchMonthlyIncomes = async () => {
+    if (!user || !isUsingSupabase) return
+
+    // Obter primeiro e último dia do mês atual
+    const now = new Date()
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    
+    // Primeiro, obter o couple_id do usuário logado
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("couple_id")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError)
+      return
+    }
+
+    if (!userProfile?.couple_id) {
+      // Se não tem couple_id, buscar apenas entradas próprias
+      const { data, error } = await supabase
+        .from("incomes")
+        .select("amount")
+        .eq("user_id", user.id)
+        .gte("date", firstDayOfMonth.toISOString().split("T")[0])
+        .lte("date", lastDayOfMonth.toISOString().split("T")[0])
+
+      if (error) {
+        console.error("Error fetching incomes:", error)
+      } else {
+        const total = data?.reduce((sum, income) => sum + income.amount, 0) || 0
+        setTotalIncomes(total)
+      }
+      return
+    }
+
+    // Buscar o parceiro do usuário logado
+    const { data: partnerProfile, error: partnerError } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("id", userProfile.couple_id)
+      .single()
+
+    if (partnerError) {
+      console.error("Error fetching partner profile:", partnerError)
+      return
+    }
+
+    // Montar array com usuário logado e parceiro
+    const coupleUserIds = [user.id]
+    if (partnerProfile) {
+      coupleUserIds.push(partnerProfile.id)
+    }
+
+    // Buscar entradas de todos os usuários do casal
+    const { data, error } = await supabase
+      .from("incomes")
+      .select("amount")
+      .in("user_id", coupleUserIds)
+      .gte("date", firstDayOfMonth.toISOString().split("T")[0])
+      .lte("date", lastDayOfMonth.toISOString().split("T")[0])
+
+    if (error) {
+      console.error("Error fetching incomes:", error)
+    } else {
+      const total = data?.reduce((sum, income) => sum + income.amount, 0) || 0
+      setTotalIncomes(total)
+    }
+  }
+
+  useEffect(() => {
+    if (isUsingSupabase && user) {
+      fetchMonthlyIncomes()
+    }
+  }, [user, isUsingSupabase])
 
   const handleSignOut = async () => {
     try {
@@ -87,13 +165,15 @@ export function DashboardContent() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Meta Mensal</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Balanço Mensal</CardTitle>
+              <TrendingDown className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€ {monthlyGoal.toFixed(2)}</div>
+              <div className={`text-2xl font-bold ${(totalIncomes - totalExpenses) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                € {(totalIncomes - totalExpenses).toFixed(2)}
+              </div>
               <p className="text-xs text-muted-foreground">
-                {((totalExpenses / monthlyGoal) * 100).toFixed(1)}% utilizado
+                Entradas: € {totalIncomes.toFixed(2)} | Saídas: € {totalExpenses.toFixed(2)}
               </p>
             </CardContent>
           </Card>
@@ -110,15 +190,23 @@ export function DashboardContent() {
           </Card>
         </div>
 
-        {/* Resumo Mensal Button */}
-        <div className="mb-6">
+        {/* Navigation Buttons */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-2">
           <Button 
             variant="outline" 
-            className="w-full md:w-auto"
+            className="w-full sm:w-auto"
             onClick={() => window.location.href = '/resumo-mensal'}
           >
             <Calendar className="h-4 w-4 mr-2" />
             Ver Resumo dos Próximos Meses
+          </Button>
+          <Button 
+            variant="outline" 
+            className="w-full sm:w-auto"
+            onClick={() => window.location.href = '/entradas'}
+          >
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Gerenciar Entradas
           </Button>
         </div>
 
@@ -144,7 +232,7 @@ export function DashboardContent() {
           </TabsContent>
 
           <TabsContent value="goals">
-            <GoalsTab onGoalChange={setMonthlyGoal} />
+            <GoalsTab />
           </TabsContent>
 
           <TabsContent value="shopping">

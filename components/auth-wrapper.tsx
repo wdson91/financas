@@ -72,18 +72,6 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }
 
-  const logout = async () => {
-    if (isUsingSupabase) {
-      try {
-        await supabase.auth.signOut()
-      } catch (err) {
-        console.error("Error signing out from Supabase:", err)
-      }
-    }
-    
-    setUser(null)
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50">

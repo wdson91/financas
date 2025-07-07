@@ -68,12 +68,6 @@ interface ExpensesTabProps {
   onPendingTotalChange?: (total: number) => void
 }
 
-interface Profile {
-  id: string
-  full_name: string
-  email?: string
-}
-
 interface UserOption {
   id: string
   email: string
@@ -92,6 +86,8 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [editingUpcomingExpense, setEditingUpcomingExpense] = useState<UpcomingExpense | null>(null)
   const [expenseSuggestions, setExpenseSuggestions] = useState<string[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
   const [newExpense, setNewExpense] = useState({
     name: "",
     amount: "",
@@ -260,13 +256,6 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       coupleUserIds.push(partnerProfile.id)
     }
 
-    const coupleUsers = [
-      { id: user.id, full_name: "Você" }, // Usuário logado
-      { id: partnerProfile.id, full_name: partnerProfile.full_name } // Parceiro
-    ]
-
-
-
     // Buscar despesas de todos os usuários do casal
     const { data, error } = await supabase
       .from("expenses")
@@ -342,13 +331,6 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       coupleUserIds.push(partnerProfile.id)
     }
 
-    const coupleUsers = [
-      { id: user.id, full_name: "Você" }, // Usuário logado
-      { id: partnerProfile.id, full_name: partnerProfile.full_name } // Parceiro
-    ]
-
-
-
     // Buscar despesas a vencer de todos os usuários do casal
     const { data, error } = await supabase
       .from("upcoming_expenses")
@@ -387,7 +369,8 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     expenseHistory.addExpenseName(newExpense.name)
     setExpenseSuggestions(expenseHistory.getExpenseNames())
 
-    const expense: any = {
+    const expense: Expense = {
+      id: '',
       name: newExpense.name,
       amount: Number.parseFloat(newExpense.amount),
       category: newExpense.category,
@@ -441,7 +424,8 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     expenseHistory.addExpenseName(newUpcomingExpense.name)
     setExpenseSuggestions(expenseHistory.getExpenseNames())
 
-    const upcomingExpense: any = {
+    const upcomingExpense: UpcomingExpense = {
+      id: '',
       name: newUpcomingExpense.name,
       amount: Number.parseFloat(newUpcomingExpense.amount),
       category: newUpcomingExpense.category,
@@ -457,7 +441,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
 
 
     // Se é uma despesa mensal, criar projeções para os próximos 12 meses
-    const monthlyProjections: any[] = []
+    const monthlyProjections: UpcomingExpense[] = []
     if (newUpcomingExpense.is_monthly) {
       const baseDate = new Date(newUpcomingExpense.due_date)
       
@@ -465,7 +449,8 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
         const projectionDate = new Date(baseDate)
         projectionDate.setMonth(projectionDate.getMonth() + i)
         
-        const projection: any = {
+        const projection: UpcomingExpense = {
+          id: '',
           name: newUpcomingExpense.name,
           amount: Number.parseFloat(newUpcomingExpense.amount),
           category: newUpcomingExpense.category,
@@ -474,7 +459,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
           user_id: user.id,
           is_paid: false,
           is_monthly: true,
-          created_at: new Date().toISOString(),
+          created_at: projectionDate.toISOString(),
           observations: newUpcomingExpense.observations,
         }
 
@@ -520,7 +505,8 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
 
   const markAsPaid = async (upcomingExpenseId: string, upcomingExpense: UpcomingExpense) => {
     // Criar uma despesa normal
-    const expense: any = {
+    const expense: Expense = {
+      id: '',
       name: upcomingExpense.name,
       amount: upcomingExpense.amount,
       category: upcomingExpense.category,
@@ -691,6 +677,17 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
   const isOwnExpense = (userId: string) => {
     return user?.id === userId
   }
+
+  // Função para filtrar despesas
+  const filteredExpenses = expenses.filter((expense) => {
+    const matchesSearch = searchTerm === "" || 
+      expense.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expense.amount.toString().includes(searchTerm)
+    
+    const matchesCategory = selectedCategory === "all" || expense.category === selectedCategory
+    
+    return matchesSearch && matchesCategory
+  })
 
   // Preparar dados do gráfico
   const categoryData = categories
@@ -1065,8 +1062,56 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
               <CardDescription>Últimas transações registradas</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Filtros de Busca */}
+              <div className="mb-6 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="search">Buscar por nome ou valor</Label>
+                    <Input
+                      id="search"
+                      placeholder="Digite para buscar..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <div className="sm:w-48">
+                    <Label htmlFor="category-filter">Filtrar por categoria</Label>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas as categorias" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as categorias</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {(searchTerm || selectedCategory !== "all") && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      {filteredExpenses.length} resultado(s) encontrado(s)
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSearchTerm("")
+                        setSelectedCategory("all")
+                      }}
+                    >
+                      Limpar filtros
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-4">
-                {expenses.slice(0, 10).map((expense) => (
+                {filteredExpenses.slice(0, 10).map((expense) => (
                   <div key={expense.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
@@ -1108,6 +1153,22 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
                     </div>
                   </div>
                 ))}
+                {filteredExpenses.length === 0 && expenses.length > 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    Nenhuma despesa encontrada com os filtros aplicados.
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => {
+                        setSearchTerm("")
+                        setSelectedCategory("all")
+                      }}
+                    >
+                      Limpar filtros
+                    </Button>
+                  </div>
+                )}
                 {expenses.length === 0 && (
                   <div className="text-center py-8 text-gray-500">Nenhuma despesa registrada ainda.</div>
                 )}
