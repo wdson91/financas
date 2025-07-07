@@ -48,56 +48,71 @@ export function GoalsTab({ onGoalChange }: GoalsTabProps) {
   })
 
   useEffect(() => {
-    if (isDemoMode) {
-      loadDemoGoals()
-    } else {
-      fetchGoals()
-    }
-  }, [user, isDemoMode])
+    fetchGoals()
+  }, [user])
 
   useEffect(() => {
     const totalGoals = goals.reduce((sum, goal) => sum + goal.target_amount, 0)
     onGoalChange(totalGoals)
   }, [goals, onGoalChange])
 
-  const loadDemoGoals = () => {
-    const demoData = localStorage.getItem("demo-goals")
-    if (demoData) {
-      setGoals(JSON.parse(demoData))
-    } else {
-      // Set some demo data
-      const sampleGoals = [
-        {
-          id: "1",
-          name: "Meta Alimentação",
-          category: "Alimentação",
-          target_amount: 800,
-          current_amount: 250.5,
-          month: new Date().toISOString().slice(0, 7),
-          user_id: "demo",
-        },
-        {
-          id: "2",
-          name: "Meta Transporte",
-          category: "Transporte",
-          target_amount: 400,
-          current_amount: 180,
-          month: new Date().toISOString().slice(0, 7),
-          user_id: "demo",
-        },
-      ]
-      setGoals(sampleGoals)
-      localStorage.setItem("demo-goals", JSON.stringify(sampleGoals))
-    }
-  }
+
 
   const fetchGoals = async () => {
     if (!user) return
 
+    // Primeiro, obter o couple_id do usuário logado
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("couple_id")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError)
+      return
+    }
+
+    if (!userProfile?.couple_id) {
+
+      // Se não tem couple_id, buscar apenas metas próprias
+      const { data, error } = await supabase
+        .from("goals")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("month", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching goals:", error)
+      } else {
+        setGoals(data || [])
+      }
+      return
+    }
+
+    // Buscar o parceiro do usuário logado
+    const { data: partnerProfile, error: partnerError } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("id", userProfile.couple_id)
+      .single()
+
+    if (partnerError) {
+      console.error("Error fetching partner profile:", partnerError)
+      return
+    }
+
+    // Montar array com usuário logado e parceiro
+    const coupleUserIds = [user.id]
+    if (partnerProfile) {
+      coupleUserIds.push(partnerProfile.id)
+    }
+
+    // Buscar metas de todos os usuários do casal
     const { data, error } = await supabase
       .from("goals")
       .select("*")
-      .eq("user_id", user.id)
+      .in("user_id", coupleUserIds)
       .order("month", { ascending: false })
 
     if (error) {
@@ -113,7 +128,7 @@ export function GoalsTab({ onGoalChange }: GoalsTabProps) {
     }
 
     const goal = {
-      id: isDemoMode ? Date.now().toString() : "",
+      id: "",
       name: newGoal.name,
       category: newGoal.category,
       target_amount: Number.parseFloat(newGoal.target_amount),
@@ -122,18 +137,12 @@ export function GoalsTab({ onGoalChange }: GoalsTabProps) {
       user_id: user.id,
     }
 
-    if (isDemoMode) {
-      const updatedGoals = [goal, ...goals]
-      setGoals(updatedGoals)
-      localStorage.setItem("demo-goals", JSON.stringify(updatedGoals))
-    } else {
-      const { error } = await supabase.from("goals").insert([goal])
-      if (error) {
-        console.error("Error adding goal:", error)
-        return
-      }
-      fetchGoals()
+    const { error } = await supabase.from("goals").insert([goal])
+    if (error) {
+      console.error("Error adding goal:", error)
+      return
     }
+    fetchGoals()
 
     setNewGoal({
       name: "",
@@ -145,17 +154,11 @@ export function GoalsTab({ onGoalChange }: GoalsTabProps) {
   }
 
   const updateGoalProgress = async (goalId: string, currentAmount: number) => {
-    if (isDemoMode) {
-      const updatedGoals = goals.map((goal) => (goal.id === goalId ? { ...goal, current_amount: currentAmount } : goal))
-      setGoals(updatedGoals)
-      localStorage.setItem("demo-goals", JSON.stringify(updatedGoals))
+    const { error } = await supabase.from("goals").update({ current_amount: currentAmount }).eq("id", goalId)
+    if (error) {
+      console.error("Error updating goal:", error)
     } else {
-      const { error } = await supabase.from("goals").update({ current_amount: currentAmount }).eq("id", goalId)
-      if (error) {
-        console.error("Error updating goal:", error)
-      } else {
-        fetchGoals()
-      }
+      fetchGoals()
     }
   }
 

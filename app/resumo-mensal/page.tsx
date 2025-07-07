@@ -43,24 +43,15 @@ export default function ResumoMensalPage() {
   // Carregar dados iniciais
   useEffect(() => {
     const loadData = async () => {
-      console.log("=== INICIANDO CARREGAMENTO DE DADOS ===")
-      console.log("isUsingSupabase:", isUsingSupabase)
-      console.log("user:", user)
       
       setLoading(true)
       
       if (isUsingSupabase && user) {
-        console.log("Carregando dados do SUPABASE")
         await fetchUpcomingExpenses()
         await fetchUsers()
-      } else {
-        console.log("Nenhuma condição atendida - não carregando dados")
-        console.log("isUsingSupabase:", isUsingSupabase)
-        console.log("user:", user)
       }
       
       setLoading(false)
-      console.log("=== CARREGAMENTO FINALIZADO ===")
     }
 
     loadData()
@@ -76,35 +67,71 @@ export default function ResumoMensalPage() {
 
 
   const fetchUpcomingExpenses = async () => {
-    console.log("=== fetchUpcomingExpenses INICIADA ===")
-    
     if (!user) {
-      console.log("❌ Usuário não autenticado - abortando busca")
       return
     }
-
-    console.log("✅ Usuário autenticado:", user.id)
-    console.log("🔍 Fazendo consulta no Supabase...")
     
     try {
-      const { data, error } = await supabase
-        .from("upcoming_expenses")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_paid", false)
-        .order("due_date", { ascending: true })
+      // Primeiro, obter o couple_id do usuário logado
+      const { data: userProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("couple_id")
+        .eq("id", user.id)
+        .single()
 
-      console.log("📊 Resultado da consulta Supabase:")
-      console.log("Data:", data)
-      console.log("Error:", error)
+      if (profileError) {
+        console.error("❌ Error fetching user profile:", profileError)
+        return
+      }
+
+      let data;
+      let error;
+
+      if (!userProfile?.couple_id) {
+        // Se não tem couple_id, buscar apenas despesas próprias
+        const result = await supabase
+          .from("upcoming_expenses")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_paid", false)
+          .order("due_date", { ascending: true })
+        
+        data = result.data;
+        error = result.error;
+      } else {
+        // Buscar o parceiro do usuário logado
+        const { data: partnerProfile, error: partnerError } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .eq("id", userProfile.couple_id)
+          .single()
+
+        if (partnerError) {
+          console.error("❌ Error fetching partner profile:", partnerError)
+          return
+        }
+
+        // Montar array com usuário logado e parceiro
+        const coupleUserIds = [user.id]
+        if (partnerProfile) {
+          coupleUserIds.push(partnerProfile.id)
+        }
+        // Buscar despesas a vencer de todos os usuários do casal
+        const result = await supabase
+          .from("upcoming_expenses")
+          .select("*")
+          .in("user_id", coupleUserIds)
+          .eq("is_paid", false)
+          .order("due_date", { ascending: true })
+        
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error("❌ Error fetching upcoming expenses:", error)
         return
       }
-
-      console.log("✅ Consulta bem-sucedida!")
-      console.log("📋 Dados brutos do Supabase:", data)
       
       // Converter valores de string para number se necessário
       const processedData = data?.map(expense => ({
@@ -112,15 +139,12 @@ export default function ResumoMensalPage() {
         amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount
       })) || []
       
-      console.log("🔄 Despesas processadas:", processedData)
-      console.log("📈 Total de despesas carregadas:", processedData.length)
       setUpcomingExpenses(processedData)
-      console.log("✅ Despesas salvas no estado")
     } catch (error) {
       console.error("❌ Erro ao buscar despesas:", error)
     }
     
-    console.log("=== fetchUpcomingExpenses FINALIZADA ===")
+
   }
 
   const fetchUsers = async () => {
@@ -168,7 +192,6 @@ export default function ResumoMensalPage() {
   }
 
   const generateMonthlySummaries = useCallback(() => {
-    console.log("Gerando resumos mensais com", upcomingExpenses.length, "despesas")
     
     const summaries: MonthlySummary[] = []
     const currentDate = new Date()
@@ -188,8 +211,6 @@ export default function ResumoMensalPage() {
                expenseDate.getFullYear() === targetDate.getFullYear()
       })
 
-      console.log(`Mês ${monthName}: ${monthExpenses.length} despesas encontradas`)
-      
       const total = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
       
       summaries.push({
@@ -202,7 +223,6 @@ export default function ResumoMensalPage() {
       })
     }
 
-    console.log("Resumos gerados:", summaries.length, "meses")
     setMonthlySummaries(summaries)
   }, [upcomingExpenses])
 
@@ -272,21 +292,7 @@ export default function ResumoMensalPage() {
         </Card>
       </div>
 
-      {/* Debug Info */}
-      <Card className="bg-gray-50">
-        <CardHeader>
-          <CardTitle className="text-sm">Debug Info</CardTitle>
-        </CardHeader>
-        <CardContent className="text-xs space-y-1">
-          <div>Despesas carregadas: {upcomingExpenses.length}</div>
-          <div>Despesas mensais: {upcomingExpenses.filter(exp => exp.is_monthly).length}</div>
-          <div>Resumos gerados: {monthlySummaries.length}</div>
-          
-          <div>Usando Supabase: {isUsingSupabase ? 'Sim' : 'Não'}</div>
-          <div>Usuário: {user?.id || 'Nenhum'}</div>
-          <div>Loading: {loading ? 'Sim' : 'Não'}</div>
-        </CardContent>
-      </Card>
+
 
       {/* Navegação de Meses */}
       <div className="flex items-center justify-between">

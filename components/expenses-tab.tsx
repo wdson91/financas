@@ -17,8 +17,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
-import { Plus, Calendar, User, Trash2, Clock, AlertTriangle, Repeat, Edit } from "lucide-react"
+import { PieChart, Pie, Cell } from "recharts"
+import { Plus, Calendar, User, Trash2, Clock, AlertTriangle, Repeat, Edit, UserPlus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/auth-wrapper"
 import { AutocompleteInput } from "@/components/ui/autocomplete-input"
@@ -126,43 +126,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     }
       }, [user, isUsingSupabase])
 
-  const loadDemoExpenses = () => {
-    const demoData = localStorage.getItem("demo-expenses")
-    if (demoData) {
-      const allExpenses = JSON.parse(demoData)
-      
-      // Filtrar apenas despesas do mês atual
-      const now = new Date()
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      
-      const currentMonthExpenses = allExpenses.filter((expense: any) => {
-        const expenseDate = new Date(expense.date)
-        return expenseDate >= firstDayOfMonth && expenseDate <= lastDayOfMonth
-      })
-      
-      setExpenses(currentMonthExpenses)
-    }
-  }
 
-  const loadDemoUpcomingExpenses = () => {
-    const demoData = localStorage.getItem("demo-upcoming-expenses")
-    if (demoData) {
-      const allUpcomingExpenses = JSON.parse(demoData)
-      
-      // Filtrar apenas despesas a vencer do mês atual
-      const now = new Date()
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      
-      const currentMonthUpcomingExpenses = allUpcomingExpenses.filter((expense: any) => {
-        const expenseDate = new Date(expense.due_date)
-        return expenseDate >= firstDayOfMonth && expenseDate <= lastDayOfMonth
-      })
-      
-      setUpcomingExpenses(currentMonthUpcomingExpenses)
-    }
-  }
 
   const loadDemoUsers = () => {
     const demoUsers = [
@@ -247,10 +211,67 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
     
+    // Primeiro, obter o couple_id do usuário logado
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("couple_id")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError)
+      return
+    }
+
+    if (!userProfile?.couple_id) {
+
+      // Se não tem couple_id, buscar apenas despesas próprias
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("date", firstDayOfMonth.toISOString().split("T")[0])
+        .lte("date", lastDayOfMonth.toISOString().split("T")[0])
+        .order("date", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching expenses:", error)
+      } else {
+        setExpenses(data || [])
+      }
+      return
+    }
+
+    // Buscar o parceiro do usuário logado
+    const { data: partnerProfile, error: partnerError } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("id", userProfile.couple_id)
+      .single()
+
+    if (partnerError) {
+      console.error("Error fetching partner profile:", partnerError)
+      return
+    }
+
+    // Montar array com usuário logado e parceiro
+    const coupleUserIds = [user.id]
+    if (partnerProfile) {
+      coupleUserIds.push(partnerProfile.id)
+    }
+
+    const coupleUsers = [
+      { id: user.id, full_name: "Você" }, // Usuário logado
+      { id: partnerProfile.id, full_name: partnerProfile.full_name } // Parceiro
+    ]
+
+
+
+    // Buscar despesas de todos os usuários do casal
     const { data, error } = await supabase
       .from("expenses")
       .select("*")
-      .eq("user_id", user.id)
+      .in("user_id", coupleUserIds)
       .gte("date", firstDayOfMonth.toISOString().split("T")[0])
       .lte("date", lastDayOfMonth.toISOString().split("T")[0])
       .order("date", { ascending: false })
@@ -258,6 +279,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     if (error) {
       console.error("Error fetching expenses:", error)
     } else {
+
       setExpenses(data || [])
     }
   }
@@ -270,10 +292,68 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
+    // Primeiro, obter o couple_id do usuário logado
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("couple_id")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError)
+      return
+    }
+
+    if (!userProfile?.couple_id) {
+
+      // Se não tem couple_id, buscar apenas despesas a vencer próprias
+      const { data, error } = await supabase
+        .from("upcoming_expenses")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_paid", false)
+        .gte("due_date", firstDayOfMonth.toISOString().split("T")[0])
+        .lte("due_date", lastDayOfMonth.toISOString().split("T")[0])
+        .order("due_date", { ascending: true })
+
+      if (error) {
+        console.error("Error fetching upcoming expenses:", error)
+      } else {
+        setUpcomingExpenses(data || [])
+      }
+      return
+    }
+
+    // Buscar o parceiro do usuário logado
+    const { data: partnerProfile, error: partnerError } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("id", userProfile.couple_id)
+      .single()
+
+    if (partnerError) {
+      console.error("Error fetching partner profile:", partnerError)
+      return
+    }
+
+    // Montar array com usuário logado e parceiro
+    const coupleUserIds = [user.id]
+    if (partnerProfile) {
+      coupleUserIds.push(partnerProfile.id)
+    }
+
+    const coupleUsers = [
+      { id: user.id, full_name: "Você" }, // Usuário logado
+      { id: partnerProfile.id, full_name: partnerProfile.full_name } // Parceiro
+    ]
+
+
+
+    // Buscar despesas a vencer de todos os usuários do casal
     const { data, error } = await supabase
       .from("upcoming_expenses")
       .select("*")
-      .eq("user_id", user.id)
+      .in("user_id", coupleUserIds)
       .eq("is_paid", false)
       .gte("due_date", firstDayOfMonth.toISOString().split("T")[0])
       .lte("due_date", lastDayOfMonth.toISOString().split("T")[0])
@@ -282,6 +362,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     if (error) {
       console.error("Error fetching upcoming expenses:", error)
     } else {
+
       setUpcomingExpenses(data || [])
     }
   }
@@ -373,10 +454,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       observations: newUpcomingExpense.observations,
     }
 
-    // Adicionar ID apenas para modo demo
-    if (isDemoMode) {
-      upcomingExpense.id = Date.now().toString()
-    }
+
 
     // Se é uma despesa mensal, criar projeções para os próximos 12 meses
     const monthlyProjections: any[] = []
@@ -400,26 +478,13 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
           observations: newUpcomingExpense.observations,
         }
 
-        if (isDemoMode) {
-          projection.id = (Date.now() + i).toString()
-        }
+
 
         monthlyProjections.push(projection)
       }
     }
 
-    if (isDemoMode) {
-      // Adicionar despesa principal
-      const updatedUpcoming = [upcomingExpense, ...upcomingExpenses]
-      
-      // Adicionar projeções mensais se necessário
-      if (monthlyProjections.length > 0) {
-        updatedUpcoming.unshift(...monthlyProjections)
-      }
-      
-      setUpcomingExpenses(updatedUpcoming)
-      localStorage.setItem("demo-upcoming-expenses", JSON.stringify(updatedUpcoming))
-    } else if (isUsingSupabase) {
+    if (isUsingSupabase) {
       // Preparar array com despesa principal + projeções
       const expensesToInsert = [upcomingExpense, ...monthlyProjections]
       
@@ -465,22 +530,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       observations: upcomingExpense.observations,
     }
 
-    // Adicionar ID apenas para modo demo
-    if (isDemoMode) {
-      expense.id = Date.now().toString()
-    }
-
-    if (isDemoMode) {
-      // Adicionar à lista de despesas
-      const updatedExpenses = [expense, ...expenses]
-      setExpenses(updatedExpenses)
-      localStorage.setItem("demo-expenses", JSON.stringify(updatedExpenses))
-
-      // Remover da lista de despesas a vencer
-      const updatedUpcoming = upcomingExpenses.filter(e => e.id !== upcomingExpenseId)
-      setUpcomingExpenses(updatedUpcoming)
-      localStorage.setItem("demo-upcoming-expenses", JSON.stringify(updatedUpcoming))
-    } else if (isUsingSupabase) {
+    if (isUsingSupabase) {
       // Adicionar despesa
       const { error: expenseError } = await supabase.from("expenses").insert([expense])
       if (expenseError) {
@@ -512,11 +562,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
   }
 
   const deleteExpense = async (id: string) => {
-    if (isDemoMode) {
-      const updatedExpenses = expenses.filter((expense) => expense.id !== id)
-      setExpenses(updatedExpenses)
-      localStorage.setItem("demo-expenses", JSON.stringify(updatedExpenses))
-    } else if (isUsingSupabase) {
+    if (isUsingSupabase) {
       const { error } = await supabase.from("expenses").delete().eq("id", id)
       if (error) {
         console.error("Error deleting expense:", error)
@@ -531,11 +577,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
   }
 
   const deleteUpcomingExpense = async (id: string) => {
-    if (isDemoMode) {
-      const updatedUpcoming = upcomingExpenses.filter((expense) => expense.id !== id)
-      setUpcomingExpenses(updatedUpcoming)
-      localStorage.setItem("demo-upcoming-expenses", JSON.stringify(updatedUpcoming))
-    } else if (isUsingSupabase) {
+    if (isUsingSupabase) {
       const { error } = await supabase.from("upcoming_expenses").delete().eq("id", id)
       if (error) {
         console.error("Error deleting upcoming expense:", error)
@@ -567,13 +609,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       amount: Number.parseFloat(editingExpense.amount.toString()),
     }
 
-    if (isDemoMode) {
-      const updatedExpenses = expenses.map(exp => 
-        exp.id === editingExpense.id ? updatedExpense : exp
-      )
-      setExpenses(updatedExpenses)
-      localStorage.setItem("demo-expenses", JSON.stringify(updatedExpenses))
-    } else if (isUsingSupabase) {
+    if (isUsingSupabase) {
       const { error } = await supabase
         .from("expenses")
         .update(updatedExpense)
@@ -603,13 +639,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       amount: Number.parseFloat(editingUpcomingExpense.amount.toString()),
     }
 
-    if (isDemoMode) {
-      const updatedUpcoming = upcomingExpenses.map(exp => 
-        exp.id === editingUpcomingExpense.id ? updatedExpense : exp
-      )
-      setUpcomingExpenses(updatedUpcoming)
-      localStorage.setItem("demo-upcoming-expenses", JSON.stringify(updatedUpcoming))
-    } else if (isUsingSupabase) {
+    if (isUsingSupabase) {
       const { error } = await supabase
         .from("upcoming_expenses")
         .update(updatedExpense)
@@ -646,6 +676,22 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     return user?.name || user?.email || userId
   }
 
+  // Função para obter o nome completo do usuário pelo ID (incluindo usuários do casal)
+  const getUserFullNameById = (userId: string) => {
+    // Primeiro tentar encontrar nos usuários carregados
+    const user = users.find(u => u.id === userId)
+    if (user?.name) return user.name
+    
+    // Se não encontrar, pode ser um usuário do casal que não foi carregado
+    // Retornar email ou ID como fallback
+    return user?.email || userId
+  }
+
+  // Função para verificar se uma despesa foi criada pelo usuário atual
+  const isOwnExpense = (userId: string) => {
+    return user?.id === userId
+  }
+
   // Preparar dados do gráfico
   const categoryData = categories
     .map((category) => {
@@ -679,6 +725,23 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Controle de Despesas</h2>
+        
+        {/* Resumo das despesas por usuário */}
+        {monthlyExpenses.length > 0 && (
+          <div className="flex space-x-4 text-sm">
+            {users.map(user => {
+              const userExpenses = monthlyExpenses.filter(expense => expense.user_id === user.id)
+              const userTotal = userExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+              return (
+                <div key={user.id} className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${user.id === user?.id ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+                  <span className="font-medium">{user.name || user.email}:</span>
+                  <span className="text-gray-600">€{userTotal.toFixed(2)} ({userExpenses.length} despesas)</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
         <div className="flex space-x-2">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -937,23 +1000,21 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{}} className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        dataKey="value"
-                        label={({ name, value }) => `${name}: € ${(value || 0).toFixed(2)}`}
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <PieChart width={533} height={300}>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: € ${(value || 0).toFixed(2)}`}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
                 </ChartContainer>
               </CardContent>
             </Card>
@@ -1011,6 +1072,15 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
                       <div className="flex items-center space-x-2">
                         <h3 className="font-medium">{expense.name}</h3>
                         <Badge variant="secondary">{expense.category}</Badge>
+                        {isOwnExpense(expense.user_id) ? (
+                          <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
+                            Minha
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
+                            Parceiro
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                         <div className="flex items-center space-x-1">
@@ -1019,7 +1089,11 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
                         </div>
                         <div className="flex items-center space-x-1">
                           <User className="h-3 w-3" />
-                          <span>{getUserNameById(expense.payer)}</span>
+                          <span>Pago por: {getUserNameById(expense.payer)}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <UserPlus className="h-3 w-3" />
+                          <span>Criado por: {getUserFullNameById(expense.user_id)}</span>
                         </div>
                       </div>
                     </div>
@@ -1066,6 +1140,15 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
                         <div className="flex items-center space-x-2">
                           <h3 className="font-medium">{expense.name}</h3>
                           <Badge variant="secondary">{expense.category}</Badge>
+                          {isOwnExpense(expense.user_id) ? (
+                            <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
+                              Minha
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
+                              Parceiro
+                            </Badge>
+                          )}
                           {expense.is_monthly && (
                             <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
                               <Repeat className="h-3 w-3 mr-1" />
@@ -1090,7 +1173,11 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
                           </div>
                           <div className="flex items-center space-x-1">
                             <User className="h-3 w-3" />
-                            <span>{getUserNameById(expense.payer)}</span>
+                            <span>Pago por: {getUserNameById(expense.payer)}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <UserPlus className="h-3 w-3" />
+                            <span>Criado por: {getUserFullNameById(expense.user_id)}</span>
                           </div>
                         </div>
                       </div>

@@ -113,10 +113,58 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
   const fetchItems = async () => {
     if (!user) return
 
+    // Primeiro, obter o couple_id do usuário logado
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("couple_id")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError)
+      return
+    }
+
+    if (!userProfile?.couple_id) {
+
+      // Se não tem couple_id, buscar apenas itens próprios
+      const { data, error } = await supabase
+        .from("shopping_items")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching shopping items:", error)
+      } else {
+        setItems(data || [])
+      }
+      return
+    }
+
+    // Buscar o parceiro do usuário logado
+    const { data: partnerProfile, error: partnerError } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("id", userProfile.couple_id)
+      .single()
+
+    if (partnerError) {
+      console.error("Error fetching partner profile:", partnerError)
+      return
+    }
+
+    // Montar array com usuário logado e parceiro
+    const coupleUserIds = [user.id]
+    if (partnerProfile) {
+      coupleUserIds.push(partnerProfile.id)
+    }
+
+    // Buscar itens de compra de todos os usuários do casal
     const { data, error } = await supabase
       .from("shopping_items")
       .select("*")
-      .eq("user_id", user.id)
+      .in("user_id", coupleUserIds)
       .order("created_at", { ascending: false })
 
     if (error) {

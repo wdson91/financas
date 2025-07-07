@@ -16,30 +16,13 @@ Sistema completo de gerenciamento financeiro para casais, com suporte a múltipl
 - **Navegação por teclado** (setas, Enter, Escape)
 - **Armazenamento local** dos últimos 50 nomes utilizados
 
-### 🔄 Sistema de Autenticação Híbrido
-- **Login Simples (JSON)**: Sistema básico para uso pessoal
-- **Supabase**: Para recursos avançados e sincronização
-- **Modo Demo**: Para testar sem cadastro
+### 🔄 Sistema de Autenticação
+- **Supabase**: Sistema principal com persistência completa
 - **Detecção automática** do sistema disponível
 
-## 🎛️ Sistemas de Autenticação
+## 🎛️ Sistema de Autenticação
 
-### 1. Modo Demo (Recomendado para Teste) ⭐
-- **Funciona imediatamente** sem configuração
-- **Dados persistem** durante a sessão (localStorage)
-- **Todas as funcionalidades** disponíveis
-- **Ideal para**: Testar o sistema completo
-
-### 2. Login Simples (Básico)
-Sistema básico baseado em arquivo JSON - ideal para uso doméstico.
-- **Dados**: Não persistem entre sessões
-- **Ideal para**: Uso temporário
-
-**Credenciais atuais:**
-- **Usuário 1**: `wdson91@gmail.com` / `94019543`
-- **Usuário 2**: `casal2@exemplo.com` / `123456`
-
-### 3. Supabase (Avançado) 🚀
+### Supabase (Principal) 🚀
 **Status**: ❌ Não configurado (por isso despesas não salvam no Supabase)
 
 Para configurar o Supabase e ter persistência completa:
@@ -47,7 +30,7 @@ Para configurar o Supabase e ter persistência completa:
 2. Configure variáveis de ambiente no `.env.local`
 3. Execute scripts SQL no painel do Supabase
 
-**Enquanto isso**: Use o **Modo Demo** que funciona perfeitamente para testar!
+**Enquanto isso**: O sistema funcionará com dados locais temporários.
 
 ## 📊 Funcionalidades Principais
 
@@ -96,9 +79,6 @@ shopping_items (id, name, quantity, category, completed, user_id, created_at)
 
 ### Armazenamento Local
 - `expense-names-history`: Histórico para autocomplete
-- `demo-expenses`: Despesas do modo demo
-- `demo-upcoming-expenses`: Despesas a vencer do modo demo
-- `simple-auth-user`: Usuário do sistema simples
 
 ## 🚀 Como Executar
 
@@ -118,8 +98,7 @@ http://localhost:3000
 ```
 
 4. **Começar a usar:**
-   - Clique em **"Experimentar Modo Demo"** para testar imediatamente
-   - Ou faça login com as credenciais do sistema simples
+   - Faça login com suas credenciais
    - Para Supabase: siga instruções em `SUPABASE-CONFIG.md`
 
 ## ❗ Solução de Problemas
@@ -128,13 +107,12 @@ http://localhost:3000
 **Causa**: Supabase não está configurado (variáveis de ambiente ausentes)
 
 **Solução**:
-1. **Opção Rápida**: Use o **Modo Demo** (dados salvam no localStorage)
-2. **Opção Completa**: Configure o Supabase seguindo `SUPABASE-CONFIG.md`
+1. Configure o Supabase seguindo `SUPABASE-CONFIG.md`
+2. Ou use o sistema com dados locais temporários
 
 ### "Dados não persistem entre sessões"
-- **Modo Demo**: ✅ Persiste (localStorage)
-- **Sistema Simples**: ❌ Não persiste (memória)
 - **Supabase**: ✅ Persiste (banco de dados)
+- **Sistema Local**: ❌ Não persiste (memória temporária)
 
 ### "Tab Supabase está desabilitada"
 **Causa**: Arquivo `.env.local` não existe ou está incompleto
@@ -153,12 +131,10 @@ financas-casal/
 │   │   └── autocomplete-input.tsx # Componente de autocomplete
 │   └── ...
 ├── lib/
-│   ├── simple-auth.ts             # Autenticação simples (JSON)
 │   ├── expense-history.ts         # Histórico para autocomplete
 │   ├── supabase.ts               # Cliente Supabase
 │   └── utils.ts
-├── data/
-│   └── users.json                # Credenciais do sistema simples
+
 ├── scripts/
 │   └── create-tables.sql         # Script SQL para Supabase
 └── ...
@@ -181,10 +157,9 @@ financas-casal/
 
 ## 🔒 Segurança
 
-### Sistema Simples
-- Adequado para uso doméstico
-- Senhas em texto simples no JSON
-- Autenticação baseada em localStorage
+### Sistema Local
+- Dados temporários em memória
+- Adequado para testes rápidos
 
 ### Sistema Supabase
 - Row Level Security (RLS) habilitado
@@ -203,7 +178,7 @@ financas-casal/
 - **Framework**: Next.js 15 + React 19
 - **Styling**: Tailwind CSS + shadcn/ui
 - **Database**: Supabase (opcional)
-- **Auth**: Sistema híbrido (JSON + Supabase)
+- **Auth**: Supabase (com fallback local)
 - **Charts**: Recharts
 - **Storage**: localStorage + Supabase
 

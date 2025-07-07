@@ -27,38 +27,28 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log("=== AUTH WRAPPER USEEFFECT ===")
-    
     // Check if Supabase is configured - if yes, use it by default
     const useSupabase = isSupabaseConfigured()
-    console.log("useSupabase detected:", useSupabase)
     setIsUsingSupabase(useSupabase)
 
     if (useSupabase) {
       // Initialize Supabase auth (now default when configured)
-      console.log("Inicializando autenticação Supabase...")
       initSupabaseAuth()
     } else {
       // Supabase não configurado - mostrar erro
-      console.log("Supabase não configurado, mostrando erro...")
       setAuthError("Supabase não está configurado. Verifique as variáveis de ambiente.")
       setLoading(false)
     }
   }, [])
 
   const initSupabaseAuth = async () => {
-    console.log("=== INICIANDO AUTENTICAÇÃO SUPABASE ===")
-    
     try {
       const { data: { session }, error } = await supabase.auth.getSession()
-      console.log("Session data:", session)
-      console.log("Session error:", error)
       
       if (error) {
         console.error("Auth session error:", error)
         setAuthError(error.message)
       } else {
-        console.log("User from session:", session?.user)
         setUser(session?.user ?? null)
       }
     } catch (err) {
@@ -70,9 +60,6 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change event:", event)
-      console.log("Auth state change session:", session)
-      
       try {
         setUser(session?.user ?? null)
         setAuthError(null)
