@@ -178,31 +178,33 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
   const completedItems = items.filter((item) => item.completed)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Lista de Compras</h2>
-        <div className="flex space-x-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <h2 className="text-xl sm:text-2xl font-bold">Lista de Compras</h2>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto text-sm">
                 <Plus className="h-4 w-4 mr-2" />
-                Novo Item
+                <span className="hidden sm:inline">Novo Item</span>
+                <span className="sm:hidden">Novo Item</span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Adicionar Item</DialogTitle>
-                <DialogDescription>Adicione um novo item à sua lista de compras.</DialogDescription>
+                <DialogTitle className="text-lg sm:text-xl">Adicionar Item</DialogTitle>
+                <DialogDescription className="text-sm">Adicione um novo item à sua lista de compras.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="item-name">Nome do Item</Label>
+                  <Label htmlFor="item-name" className="text-sm">Nome do Item</Label>
                   <Input
                     id="item-name"
                     value={newItem.name}
                     onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                     placeholder="Ex: Leite"
+                    className="h-10 sm:h-11 text-sm"
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
                         addItem()
@@ -211,22 +213,23 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="item-quantity">Quantidade</Label>
+                  <Label htmlFor="item-quantity" className="text-sm">Quantidade</Label>
                   <Input
                     id="item-quantity"
                     type="number"
                     min="1"
                     value={newItem.quantity}
                     onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                    className="h-10 sm:h-11 text-sm"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="item-category">Categoria (Opcional)</Label>
+                  <Label htmlFor="item-category" className="text-sm">Categoria (Opcional)</Label>
                   <select
                     id="item-category"
                     value={newItem.category}
                     onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    className="w-full p-2 border border-gray-300 rounded-md h-10 sm:h-11 text-sm"
                   >
                     <option value="">Selecione uma categoria</option>
                     {shoppingCategories.map((category) => (
@@ -236,14 +239,14 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
                     ))}
                   </select>
                 </div>
-                <Button onClick={addItem} className="w-full">
+                <Button onClick={addItem} className="w-full h-10 sm:h-11 text-sm">
                   Adicionar Item
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
           {completedItems.length > 0 && (
-            <Button variant="outline" onClick={clearCompleted}>
+            <Button variant="outline" onClick={clearCompleted} className="w-full sm:w-auto text-sm">
               Limpar Concluídos
             </Button>
           )}
@@ -251,34 +254,34 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
       </div>
 
       {/* Shopping Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Itens Pendentes</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Itens Pendentes</CardTitle>
+            <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingItems.length}</div>
+            <div className="text-lg sm:text-2xl font-bold">{pendingItems.length}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Itens Concluídos</CardTitle>
-            <History className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Itens Concluídos</CardTitle>
+            <History className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{completedItems.length}</div>
+            <div className="text-lg sm:text-2xl font-bold text-green-600">{completedItems.length}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Itens</CardTitle>
-            <Plus className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Total de Itens</CardTitle>
+            <Plus className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{items.length}</div>
+            <div className="text-lg sm:text-2xl font-bold">{items.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -287,8 +290,8 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
       {pendingItems.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Itens para Comprar</CardTitle>
-            <CardDescription>Marque os itens conforme for comprando</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Itens para Comprar</CardTitle>
+            <CardDescription className="text-sm">Marque os itens conforme for comprando</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -300,17 +303,19 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
                     className="h-5 w-5"
                   />
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">{item.name}</span>
-                      <Badge variant="outline">{item.quantity}x</Badge>
-                      {item.category && (
-                        <Badge variant="secondary" className="text-xs">
-                          {item.category}
-                        </Badge>
-                      )}
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                      <span className="font-medium text-sm sm:text-base">{item.name}</span>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="text-xs">{item.quantity}x</Badge>
+                        {item.category && (
+                          <Badge variant="secondary" className="text-xs">
+                            {item.category}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => deleteItem(item.id)}>
+                  <Button variant="ghost" size="sm" onClick={() => deleteItem(item.id)} className="h-8 w-8 p-0">
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>
@@ -324,8 +329,8 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
       {completedItems.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Itens Comprados</CardTitle>
-            <CardDescription>Itens já adquiridos nesta lista</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Itens Comprados</CardTitle>
+            <CardDescription className="text-sm">Itens já adquiridos nesta lista</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -337,17 +342,19 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
                     className="h-5 w-5"
                   />
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium line-through text-gray-600">{item.name}</span>
-                      <Badge variant="outline">{item.quantity}x</Badge>
-                      {item.category && (
-                        <Badge variant="secondary" className="text-xs">
-                          {item.category}
-                        </Badge>
-                      )}
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                      <span className="font-medium line-through text-gray-600 text-sm sm:text-base">{item.name}</span>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="text-xs">{item.quantity}x</Badge>
+                        {item.category && (
+                          <Badge variant="secondary" className="text-xs">
+                            {item.category}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => deleteItem(item.id)}>
+                  <Button variant="ghost" size="sm" onClick={() => deleteItem(item.id)} className="h-8 w-8 p-0">
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>
@@ -360,11 +367,11 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
       {/* Empty State */}
       {items.length === 0 && (
         <Card>
-          <CardContent className="text-center py-12">
+          <CardContent className="text-center py-8">
             <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Lista vazia</h3>
-            <p className="text-gray-600 mb-4">Adicione itens à sua lista de compras para começar.</p>
-            <Button onClick={() => setIsDialogOpen(true)}>
+            <p className="text-sm text-gray-600 mb-4">Adicione itens à sua lista de compras para começar.</p>
+            <Button onClick={() => setIsDialogOpen(true)} className="text-sm">
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Primeiro Item
             </Button>

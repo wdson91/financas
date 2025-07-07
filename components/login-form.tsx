@@ -72,34 +72,38 @@ export function LoginForm({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Heart className="h-12 w-12 text-pink-500" />
+      <Card className="w-full max-w-sm sm:max-w-md">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center">
+            <Heart className="h-10 w-10 sm:h-12 sm:w-12 text-pink-500" />
           </div>
-          <CardTitle className="text-2xl">Finanças do Casal</CardTitle>
-          <CardDescription>Gerencie suas finanças e listas de compras juntos</CardDescription>
+          <div className="space-y-2">
+            <CardTitle className="text-xl sm:text-2xl">Finanças do Casal</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
+              Gerencie suas finanças e listas de compras juntos
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           {/* Auth Error Alert */}
           {authError && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{authError}</AlertDescription>
+              <AlertDescription className="text-sm">{authError}</AlertDescription>
             </Alert>
           )}
 
           {/* Supabase Login/Signup */}
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 h-10 sm:h-11">
+              <TabsTrigger value="signin" className="text-sm sm:text-base">Entrar</TabsTrigger>
+              <TabsTrigger value="signup" className="text-sm sm:text-base">Cadastrar</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="signin">
+            <TabsContent value="signin" className="space-y-4">
               <form onSubmit={handleSupabaseSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
+                  <Label htmlFor="email" className="text-sm sm:text-base">E-mail</Label>
                   <Input 
                     id="email" 
                     type="email" 
@@ -107,10 +111,11 @@ export function LoginForm({
                     onChange={(e) => setEmail(e.target.value)} 
                     required 
                     placeholder="seu@email.com"
+                    className="h-10 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password" className="text-sm sm:text-base">Senha</Label>
                   <Input
                     id="password"
                     type="password"
@@ -118,26 +123,27 @@ export function LoginForm({
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="Digite sua senha"
+                    className="h-10 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full h-10 sm:h-11 text-sm sm:text-base" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
 
               {/* Info para primeiro uso */}
               <div className="mt-4 p-3 bg-green-50 rounded-md">
-                <p className="text-xs text-green-700 text-center">
+                <p className="text-xs sm:text-sm text-green-700 text-center">
                   <strong>Primeira vez?</strong><br />
                   Clique em &quot;Cadastrar&quot; para criar sua conta
                 </p>
               </div>
             </TabsContent>
 
-            <TabsContent value="signup">
+            <TabsContent value="signup" className="space-y-4">
               <form onSubmit={handleSupabaseSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email-signup">E-mail</Label>
+                  <Label htmlFor="email-signup" className="text-sm sm:text-base">E-mail</Label>
                   <Input
                     id="email-signup"
                     type="email"
@@ -145,10 +151,11 @@ export function LoginForm({
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="seu@email.com"
+                    className="h-10 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-signup">Senha</Label>
+                  <Label htmlFor="password-signup" className="text-sm sm:text-base">Senha</Label>
                   <Input
                     id="password-signup"
                     type="password"
@@ -157,16 +164,17 @@ export function LoginForm({
                     required
                     minLength={6}
                     placeholder="Mínimo 6 caracteres"
+                    className="h-10 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full h-10 sm:h-11 text-sm sm:text-base" disabled={loading}>
                   {loading ? "Cadastrando..." : "Cadastrar"}
                 </Button>
               </form>
 
               {/* Informações sobre cadastro */}
               <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                <p className="text-xs text-blue-700 text-center">
+                <p className="text-xs sm:text-sm text-blue-700 text-center">
                   <strong>Importante:</strong><br />
                   • A senha deve ter pelo menos 6 caracteres<br />
                   • Você receberá um e-mail de confirmação
@@ -178,7 +186,7 @@ export function LoginForm({
           {/* Message Display */}
           {message && (
             <Alert variant={message.includes("sucesso") ? "default" : "destructive"}>
-              <AlertDescription>{message}</AlertDescription>
+              <AlertDescription className="text-sm">{message}</AlertDescription>
             </Alert>
           )}
         </CardContent>

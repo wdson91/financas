@@ -1,187 +1,129 @@
 # Finanças do Casal
 
-Sistema completo de gerenciamento financeiro para casais, com suporte a múltiplos métodos de autenticação e recursos avançados.
+Uma aplicação web para gerenciar finanças e listas de compras em família, desenvolvida com Next.js, TypeScript e Supabase.
 
-## ✨ Novas Funcionalidades
+## 🚀 Funcionalidades
 
-### 🔔 Despesas a Vencer
-- **Cadastro de despesas futuras** com data de vencimento
-- **Alertas visuais** para despesas vencendo em breve (próximos 7 dias)
-- **Marcação automática** como pago (converte para despesa normal)
-- **Status colorido** (vencida, vence em breve, normal)
-
-### 🎯 Sistema de Autocomplete
-- **Histórico inteligente** de nomes de despesas
-- **Sugestões dinâmicas** conforme você digita
-- **Navegação por teclado** (setas, Enter, Escape)
-- **Armazenamento local** dos últimos 50 nomes utilizados
-
-### 🔄 Sistema de Autenticação
-- **Supabase**: Sistema principal com persistência completa
-- **Detecção automática** do sistema disponível
-
-## 🎛️ Sistema de Autenticação
-
-### Supabase (Principal) 🚀
-**Status**: ❌ Não configurado (por isso despesas não salvam no Supabase)
-
-Para configurar o Supabase e ter persistência completa:
-1. Veja instruções detalhadas em `SUPABASE-CONFIG.md`
-2. Configure variáveis de ambiente no `.env.local`
-3. Execute scripts SQL no painel do Supabase
-
-**Enquanto isso**: O sistema funcionará com dados locais temporários.
-
-## 📊 Funcionalidades Principais
-
-### 💰 Controle de Despesas
-- ✅ Cadastro com autocomplete inteligente
-- ✅ Categorização automática
-- ✅ Gráficos por categoria
-- ✅ Resumo mensal detalhado
-- ✅ Histórico completo
-
-### ⏰ Despesas a Vencer
-- ✅ Cadastro com data de vencimento
-- ✅ Alertas visuais para vencimentos próximos
-- ✅ Marcação como pago (converte para despesa)
-- ✅ Status colorido por urgência
-- ✅ Organização por abas
-
-### 🎯 Metas Financeiras
-- ✅ Definição de limites por categoria
-- ✅ Acompanhamento de progresso
-- ✅ Alertas de excesso
-- ✅ Relatórios de economia
-
-### 🛒 Lista de Compras
-- ✅ Organização por categorias
-- ✅ Controle de quantidades
-- ✅ Marcação de itens comprados
-- ✅ Contadores automáticos
-
-## 🗄️ Estrutura de Dados
-
-### Tabelas (Supabase)
-```sql
--- Despesas normais
-expenses (id, name, amount, category, date, payer, user_id, created_at)
-
--- Despesas a vencer
-upcoming_expenses (id, name, amount, category, due_date, payer, user_id, is_paid, created_at)
-
--- Metas financeiras
-goals (id, name, category, target_amount, current_amount, month, user_id, created_at)
-
--- Lista de compras
-shopping_items (id, name, quantity, category, completed, user_id, created_at)
-```
-
-### Armazenamento Local
-- `expense-names-history`: Histórico para autocomplete
-
-## 🚀 Como Executar
-
-1. **Instalar dependências:**
-```bash
-npm install
-```
-
-2. **Executar o projeto:**
-```bash
-npm run dev
-```
-
-3. **Acessar:**
-```
-http://localhost:3000
-```
-
-4. **Começar a usar:**
-   - Faça login com suas credenciais
-   - Para Supabase: siga instruções em `SUPABASE-CONFIG.md`
-
-## ❗ Solução de Problemas
-
-### "As despesas não estão sendo salvas no Supabase"
-**Causa**: Supabase não está configurado (variáveis de ambiente ausentes)
-
-**Solução**:
-1. Configure o Supabase seguindo `SUPABASE-CONFIG.md`
-2. Ou use o sistema com dados locais temporários
-
-### "Dados não persistem entre sessões"
-- **Supabase**: ✅ Persiste (banco de dados)
-- **Sistema Local**: ❌ Não persiste (memória temporária)
-
-### "Tab Supabase está desabilitada"
-**Causa**: Arquivo `.env.local` não existe ou está incompleto
-
-**Como verificar**: Se Supabase estiver configurado, a aba aparecerá habilitada no login.
-
-## 📁 Estrutura do Projeto
-
-```
-financas-casal/
-├── components/
-│   ├── auth-wrapper.tsx           # Gerenciamento de autenticação
-│   ├── login-form.tsx             # Formulário de login híbrido
-│   ├── expenses-tab.tsx           # Controle de despesas + a vencer
-│   ├── ui/
-│   │   └── autocomplete-input.tsx # Componente de autocomplete
-│   └── ...
-├── lib/
-│   ├── expense-history.ts         # Histórico para autocomplete
-│   ├── supabase.ts               # Cliente Supabase
-│   └── utils.ts
-
-├── scripts/
-│   └── create-tables.sql         # Script SQL para Supabase
-└── ...
-```
-
-## 🎨 Interface
-
-### Recursos Visuais
-- ✅ **Design responsivo** - funciona em desktop e mobile
-- ✅ **Tema moderno** - cores suaves e interface limpa
-- ✅ **Feedback visual** - alertas, cores e status
-- ✅ **Organização por abas** - conteúdo bem estruturado
-- ✅ **Gráficos interativos** - visualização de dados
-
-### Experiência do Usuário
-- ✅ **Autocomplete inteligente** - agiliza o cadastro
-- ✅ **Validações em tempo real** - evita erros
-- ✅ **Feedback imediato** - confirma ações
-- ✅ **Navegação intuitiva** - fácil de usar
-
-## 🔒 Segurança
-
-### Sistema Local
-- Dados temporários em memória
-- Adequado para testes rápidos
-
-### Sistema Supabase
-- Row Level Security (RLS) habilitado
-- Políticas de acesso por usuário
-- Autenticação JWT segura
-- Criptografia de dados
+- **Controle de Despesas**: Registre e acompanhe despesas por categoria
+- **Despesas a Vencer**: Gerencie contas futuras e recorrentes
+- **Entradas**: Registre salários e outras receitas
+- **Metas Financeiras**: Defina limites de gastos por categoria
+- **Lista de Compras**: Organize suas compras com categorização
+- **Resumo Mensal**: Visualize despesas futuras por mês
+- **Sistema de Casais**: Compartilhe dados com seu parceiro(a)
 
 ## 📱 Responsividade
 
-- ✅ **Desktop**: Layout completo com gráficos
-- ✅ **Tablet**: Interface adaptada
-- ✅ **Mobile**: Otimizada para toque
+O projeto foi completamente otimizado para funcionar em todos os dispositivos:
+
+### ✅ Melhorias Implementadas
+
+- **Mobile-First Design**: Layout adaptativo que funciona perfeitamente em smartphones
+- **Touch-Friendly**: Botões e elementos otimizados para toque (mínimo 44px)
+- **Navegação Mobile**: Menu hambúrguer para dispositivos móveis
+- **Cards Responsivos**: Grid adaptativo que se ajusta ao tamanho da tela
+- **Textos Escaláveis**: Tipografia que se adapta ao dispositivo
+- **Diálogos Otimizados**: Modais que funcionam bem em telas pequenas
+- **Safe Area Support**: Suporte para notch e áreas seguras do dispositivo
+
+### 📐 Breakpoints Utilizados
+
+- **Mobile**: < 640px (sm)
+- **Tablet**: 640px - 1024px (sm - lg)
+- **Desktop**: > 1024px (lg+)
+
+### 🎨 Componentes Responsivos
+
+- **Dashboard**: Cards em grid adaptativo, menu mobile
+- **Formulários**: Campos otimizados para mobile
+- **Tabelas**: Layout flexível para diferentes tamanhos
+- **Navegação**: Tabs e botões adaptativos
+- **Diálogos**: Modais com tamanho responsivo
 
 ## 🛠️ Tecnologias
 
-- **Framework**: Next.js 15 + React 19
-- **Styling**: Tailwind CSS + shadcn/ui
-- **Database**: Supabase (opcional)
-- **Auth**: Supabase (com fallback local)
-- **Charts**: Recharts
-- **Storage**: localStorage + Supabase
+- **Frontend**: Next.js 15, React, TypeScript
+- **UI**: Tailwind CSS, shadcn/ui
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Deploy**: Vercel
 
----
+## 🚀 Como Executar
 
-**Desenvolvido com ❤️ para facilitar o controle financeiro do casal!** 
+1. Clone o repositório:
+```bash
+git clone <url-do-repositorio>
+cd financas-casal
+```
+
+2. Instale as dependências:
+```bash
+npm install
+# ou
+pnpm install
+```
+
+3. Configure as variáveis de ambiente:
+```bash
+cp .env.example .env.local
+```
+
+4. Execute o projeto:
+```bash
+npm run dev
+# ou
+pnpm dev
+```
+
+5. Acesse: http://localhost:3000
+
+## 📋 Pré-requisitos
+
+- Node.js 18+
+- Conta no Supabase
+- Banco de dados PostgreSQL configurado
+
+## 🔧 Configuração do Supabase
+
+1. Crie um projeto no Supabase
+2. Configure as tabelas necessárias (veja scripts/ na pasta scripts)
+3. Configure as políticas de segurança
+4. Adicione as variáveis de ambiente
+
+## 📱 Teste de Responsividade
+
+Para testar a responsividade:
+
+1. **Chrome DevTools**: F12 → Toggle Device Toolbar
+2. **Teste em dispositivos reais**: Smartphone, tablet, desktop
+3. **Orientação**: Teste em portrait e landscape
+4. **Navegadores**: Chrome, Safari, Firefox, Edge
+
+### ✅ Checklist de Responsividade
+
+- [x] Layout adaptativo para mobile
+- [x] Menu hambúrguer funcional
+- [x] Cards em grid responsivo
+- [x] Formulários otimizados para touch
+- [x] Diálogos com tamanho adequado
+- [x] Textos escaláveis
+- [x] Botões com tamanho mínimo para touch
+- [x] Navegação por tabs responsiva
+- [x] Safe area support
+- [x] Scroll suave em mobile
+- [x] Focus states para acessibilidade
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature
+3. Commit suas mudanças
+4. Push para a branch
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT.
+
+## 📞 Suporte
+
+Para dúvidas ou problemas, abra uma issue no repositório. 

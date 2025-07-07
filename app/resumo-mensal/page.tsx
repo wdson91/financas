@@ -200,224 +200,265 @@ export default function ResumoMensalPage() {
     // Gerar resumos para os próximos 12 meses
     for (let i = 0; i < 12; i++) {
       const targetDate = new Date(currentYear, currentMonth + i, 1)
-      const monthKey = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}`
-      const monthName = targetDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      const monthKey = targetDate.toISOString().slice(0, 7) // YYYY-MM format
       
-      // Filtrar despesas para este mês específico
+      // Filtrar despesas para este mês
       const monthExpenses = upcomingExpenses.filter(expense => {
         const expenseDate = new Date(expense.due_date)
         return expenseDate.getMonth() === targetDate.getMonth() && 
                expenseDate.getFullYear() === targetDate.getFullYear()
       })
-
+      
       const total = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
       
       summaries.push({
         month: monthKey,
-        monthName,
+        monthName: targetDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
         year: targetDate.getFullYear(),
         total,
         expenses: monthExpenses,
-        isCurrentMonth: i === 0
+        isCurrentMonth: targetDate.getMonth() === currentMonth && targetDate.getFullYear() === currentYear
       })
     }
-
+    
     setMonthlySummaries(summaries)
   }, [upcomingExpenses])
 
+  const nextMonth = () => {
+    setCurrentMonthIndex(prev => Math.min(prev + 1, monthlySummaries.length - 1))
+  }
+
+  const prevMonth = () => {
+    setCurrentMonthIndex(prev => Math.max(prev - 1, 0))
+  }
+
+  const currentSummary = monthlySummaries[currentMonthIndex]
+
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando resumo mensal...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando resumo mensal...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Resumo Mensal</h1>
-          <p className="text-gray-600">Previsão de despesas para os próximos meses</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Resumo Mensal</h1>
+            <p className="text-sm sm:text-base text-gray-600">Acompanhe suas despesas futuras por mês</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" onClick={() => window.history.back()} className="text-sm">
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Voltar</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => window.history.back()}>
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-        </div>
-      </div>
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Próximos 12 Meses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(monthlySummaries.reduce((sum, month) => sum + month.total, 0))}
+        {/* Navegação de Meses */}
+        {monthlySummaries.length > 0 && (
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="outline" 
+              onClick={prevMonth} 
+              disabled={currentMonthIndex === 0}
+              className="text-sm"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Mês Anterior</span>
+            </Button>
+            
+            <div className="text-center">
+              <h2 className="text-lg sm:text-xl font-semibold">{currentSummary?.monthName}</h2>
+              <p className="text-xs sm:text-sm text-gray-600">
+                {currentMonthIndex + 1} de {monthlySummaries.length} meses
+              </p>
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Média Mensal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {monthlySummaries.length > 0 
-                ? formatCurrency(monthlySummaries.reduce((sum, month) => sum + month.total, 0) / 12)
-                : formatCurrency(0)
-              }
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Despesas Mensais</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {upcomingExpenses.filter(exp => exp.is_monthly).length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            
+            <Button 
+              variant="outline" 
+              onClick={nextMonth} 
+              disabled={currentMonthIndex === monthlySummaries.length - 1}
+              className="text-sm"
+            >
+              <span className="hidden sm:inline">Próximo Mês</span>
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        )}
 
-
-
-      {/* Navegação de Meses */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="outline"
-          onClick={() => setCurrentMonthIndex(Math.max(0, currentMonthIndex - 1))}
-          disabled={currentMonthIndex === 0}
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Mês Anterior
-        </Button>
-        
-        <h2 className="text-xl font-semibold">
-          {monthlySummaries[currentMonthIndex]?.monthName || "Carregando..."}
-        </h2>
-        
-        <Button
-          variant="outline"
-          onClick={() => setCurrentMonthIndex(Math.min(11, currentMonthIndex + 1))}
-          disabled={currentMonthIndex === 11}
-        >
-          Próximo Mês
-          <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
-
-      {/* Detalhes do Mês Selecionado */}
-      {monthlySummaries[currentMonthIndex] && (
-        <Card className={getMonthColor(monthlySummaries[currentMonthIndex])}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>{monthlySummaries[currentMonthIndex].monthName}</CardTitle>
-                <CardDescription>
-                  {monthlySummaries[currentMonthIndex].expenses.length} despesa(s) programada(s)
-                </CardDescription>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold">
-                  {formatCurrency(monthlySummaries[currentMonthIndex].total)}
+        {/* Resumo do Mês Atual */}
+        {currentSummary && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className={`${getMonthColor(currentSummary)} hover:shadow-md transition-shadow`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium">Total do Mês</CardTitle>
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-lg sm:text-2xl font-bold">
+                  {formatCurrency(currentSummary.total)}
                 </div>
-                <div className="text-sm text-gray-600">Total do mês</div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {monthlySummaries[currentMonthIndex].expenses.length > 0 ? (
-                monthlySummaries[currentMonthIndex].expenses.map((expense) => (
-                  <div key={expense.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium">{expense.name}</h3>
-                        <Badge variant="secondary">{expense.category}</Badge>
-                        {expense.is_monthly && (
-                          <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
-                            <Repeat className="h-3 w-3 mr-1" />
-                            Mensal
-                          </Badge>
-                        )}
+                <p className="text-xs text-muted-foreground">
+                  {currentSummary.expenses.length} despesas a vencer
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium">Despesas Recorrentes</CardTitle>
+                <Repeat className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-lg sm:text-2xl font-bold">
+                  {currentSummary.expenses.filter(e => e.is_monthly).length}
+                </div>
+                <p className="text-xs text-muted-foreground">Mensais</p>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium">Status</CardTitle>
+                <User className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-lg sm:text-2xl font-bold">
+                  {currentSummary.isCurrentMonth ? (
+                    <Badge variant="default" className="bg-blue-100 text-blue-800">
+                      Mês Atual
+                    </Badge>
+                  ) : currentSummary.total > 0 ? (
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                      Com Despesas
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-green-100 text-green-800">
+                      Livre
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {currentSummary.isCurrentMonth ? 'Mês em andamento' : 'Mês futuro'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Lista de Despesas do Mês */}
+        {currentSummary && currentSummary.expenses.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg sm:text-xl">Despesas de {currentSummary.monthName}</CardTitle>
+              <CardDescription className="text-sm">
+                Lista de todas as despesas a vencer neste mês
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {currentSummary.expenses.map((expense) => (
+                  <div key={expense.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg space-y-3 sm:space-y-0">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                        <h3 className="font-medium text-sm sm:text-base">{expense.name}</h3>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary" className="text-xs">{expense.category}</Badge>
+                          {expense.is_monthly && (
+                            <Badge variant="outline" className="border-purple-500 text-purple-700 bg-purple-50 text-xs">
+                              <Repeat className="h-3 w-3 mr-1" />
+                              Mensal
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-600">
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-3 w-3" />
                           <span>Vence: {new Date(expense.due_date).toLocaleDateString("pt-BR")}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <User className="h-3 w-3" />
-                          <span>{getUserNameById(expense.payer)}</span>
+                          <span className="truncate">Responsável: {getUserNameById(expense.payer)}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold text-lg">
+                    <div className="flex items-center space-x-2 w-full sm:w-auto">
+                      <span className="font-bold text-base sm:text-lg text-red-600">
                         {formatCurrency(expense.amount)}
-                      </div>
+                      </span>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma despesa programada</h3>
-                  <p className="text-gray-600">Este mês não possui despesas programadas.</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Visão Geral dos Próximos Meses */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Visão Geral dos Próximos 12 Meses</CardTitle>
-          <CardDescription>Resumo rápido de todos os meses</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {monthlySummaries.map((summary, index) => (
-              <div
-                key={summary.month}
-                className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                  index === currentMonthIndex 
-                    ? 'border-blue-500 bg-blue-100' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setCurrentMonthIndex(index)}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">{summary.monthName}</h3>
-                  {summary.isCurrentMonth && (
-                    <Badge variant="secondary">Atual</Badge>
-                  )}
-                </div>
-                <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(summary.total)}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {summary.expenses.length} despesa(s)
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Estado Vazio */}
+        {currentSummary && currentSummary.expenses.length === 0 && (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Nenhuma despesa para {currentSummary.monthName}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {currentSummary.isCurrentMonth 
+                  ? "Não há despesas a vencer neste mês."
+                  : "Não há despesas programadas para este mês."
+                }
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Visão Geral dos Próximos Meses */}
+        {monthlySummaries.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg sm:text-xl">Visão Geral dos Próximos Meses</CardTitle>
+              <CardDescription className="text-sm">
+                Resumo de despesas programadas para os próximos meses
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {monthlySummaries.map((summary, index) => (
+                  <div 
+                    key={summary.month} 
+                    className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                      index === currentMonthIndex ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                    } ${getMonthColor(summary)}`}
+                    onClick={() => setCurrentMonthIndex(index)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-medium text-sm">{summary.monthName}</h4>
+                      {summary.isCurrentMonth && (
+                        <Badge variant="default" className="text-xs">Atual</Badge>
+                      )}
+                    </div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {formatCurrency(summary.total)}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {summary.expenses.length} despesa{summary.expenses.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 } 

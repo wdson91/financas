@@ -199,7 +199,9 @@ export default function EntradasPage() {
       }
       fetchIncomes()
     } else {
-      setIncomes(incomes.filter(income => income.id !== id))
+      // Sistema simples - remover da lista local
+      const updatedIncomes = incomes.filter(income => income.id !== id)
+      setIncomes(updatedIncomes)
     }
   }
 
@@ -229,14 +231,15 @@ export default function EntradasPage() {
       }
       fetchIncomes()
     } else {
-      const updatedIncomes = incomes.map(income => 
+      // Sistema simples - atualizar na lista local
+      const updatedIncomes = incomes.map(income =>
         income.id === editingIncome.id ? editingIncome : income
       )
       setIncomes(updatedIncomes)
     }
 
-    setEditingIncome(null)
     setIsEditDialogOpen(false)
+    setEditingIncome(null)
   }
 
   const getUserNameById = (userId: string) => {
@@ -245,7 +248,7 @@ export default function EntradasPage() {
   }
 
   const isOwnIncome = (userId: string) => {
-    return user?.id === userId
+    return userId === user?.id
   }
 
   const currentMonth = new Date().getMonth()
@@ -258,280 +261,292 @@ export default function EntradasPage() {
   const totalMonthlyIncome = monthlyIncomes.reduce((sum, income) => sum + income.amount, 0)
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Entradas</h1>
-          <p className="text-gray-600">Registre suas entradas como salários e outros valores</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => window.history.back()}>
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-        </div>
-      </div>
-
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total do Mês</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">€ {totalMonthlyIncome.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Entradas do mês atual</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Número de Entradas</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{monthlyIncomes.length}</div>
-            <p className="text-xs text-muted-foreground">Registros este mês</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Média por Entrada</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              € {monthlyIncomes.length > 0 ? (totalMonthlyIncome / monthlyIncomes.length).toFixed(2) : "0.00"}
-            </div>
-            <p className="text-xs text-muted-foreground">Valor médio</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Botão Adicionar */}
-      <div className="flex justify-end">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Entrada
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Entradas</h1>
+            <p className="text-sm sm:text-base text-gray-600">Registre suas entradas como salários e outros valores</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" onClick={() => window.history.back()} className="text-sm">
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Voltar</span>
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adicionar Nova Entrada</DialogTitle>
-              <DialogDescription>Registre uma nova entrada de valor.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Nome da Entrada</Label>
-                <Input
-                  id="name"
-                  value={newIncome.name}
-                  onChange={(e) => setNewIncome({ ...newIncome, name: e.target.value })}
-                  placeholder="Ex: Salário, Freelance..."
-                />
+          </div>
+        </div>
+
+        {/* Estatísticas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Total do Mês</CardTitle>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg sm:text-2xl font-bold text-green-600">€ {totalMonthlyIncome.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">Entradas do mês atual</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Número de Entradas</CardTitle>
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg sm:text-2xl font-bold">{monthlyIncomes.length}</div>
+              <p className="text-xs text-muted-foreground">Registros este mês</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Média por Entrada</CardTitle>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg sm:text-2xl font-bold">
+                € {monthlyIncomes.length > 0 ? (totalMonthlyIncome / monthlyIncomes.length).toFixed(2) : "0.00"}
               </div>
-              <div>
-                <Label htmlFor="amount">Valor</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={newIncome.amount}
-                  onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <Label htmlFor="category">Categoria</Label>
-                <Select
-                  value={newIncome.category}
-                  onValueChange={(value) => setNewIncome({ ...newIncome, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {incomeCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="date">Data</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={newIncome.date}
-                  onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="observations">Observações (opcional)</Label>
-                <Textarea
-                  id="observations"
-                  value={newIncome.observations}
-                  onChange={(e) => setNewIncome({ ...newIncome, observations: e.target.value })}
-                  placeholder="Adicione observações sobre a entrada..."
-                  rows={3}
-                />
-              </div>
-              <Button onClick={addIncome} className="w-full">
-                Adicionar Entrada
+              <p className="text-xs text-muted-foreground">Valor médio</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Botão Adicionar */}
+        <div className="flex justify-end">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto text-sm">
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Nova Entrada</span>
+                <span className="sm:hidden">Nova Entrada</span>
               </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-lg sm:text-xl">Adicionar Nova Entrada</DialogTitle>
+                <DialogDescription className="text-sm">Registre uma nova entrada de valor.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name" className="text-sm">Nome da Entrada</Label>
+                  <Input
+                    id="name"
+                    value={newIncome.name}
+                    onChange={(e) => setNewIncome({ ...newIncome, name: e.target.value })}
+                    placeholder="Ex: Salário, Freelance..."
+                    className="h-10 sm:h-11 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="amount" className="text-sm">Valor</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={newIncome.amount}
+                    onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
+                    placeholder="0.00"
+                    className="h-10 sm:h-11 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="category" className="text-sm">Categoria</Label>
+                  <Select
+                    value={newIncome.category}
+                    onValueChange={(value) => setNewIncome({ ...newIncome, category: value })}
+                  >
+                    <SelectTrigger className="h-10 sm:h-11 text-sm">
+                      <SelectValue placeholder="Selecione uma categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {incomeCategories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="date" className="text-sm">Data</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={newIncome.date}
+                    onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
+                    className="h-10 sm:h-11 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="observations" className="text-sm">Observações (opcional)</Label>
+                  <Textarea
+                    id="observations"
+                    value={newIncome.observations}
+                    onChange={(e) => setNewIncome({ ...newIncome, observations: e.target.value })}
+                    placeholder="Adicione observações sobre a entrada..."
+                    rows={3}
+                    className="text-sm"
+                  />
+                </div>
+                <Button onClick={addIncome} className="w-full h-10 sm:h-11 text-sm">
+                  Adicionar Entrada
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Lista de Entradas */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg sm:text-xl">Entradas do Mês</CardTitle>
+            <CardDescription className="text-sm">Lista de todas as entradas registradas este mês</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {monthlyIncomes.map((income) => (
+                <div key={income.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg space-y-3 sm:space-y-0">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                      <h3 className="font-medium text-sm sm:text-base">{income.name}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="text-xs">{income.category}</Badge>
+                        {isOwnIncome(income.user_id) ? (
+                          <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50 text-xs">
+                            Minha
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50 text-xs">
+                            Parceiro
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-600">
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(income.date).toLocaleDateString("pt-BR")}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <User className="h-3 w-3" />
+                        <span className="truncate">Registrado por: {getUserNameById(income.user_id)}</span>
+                      </div>
+                    </div>
+                    {income.observations && (
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        {income.observations}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <span className="font-bold text-base sm:text-lg text-green-600">€ {income.amount.toFixed(2)}</span>
+                    <div className="flex space-x-1">
+                      <Button variant="ghost" size="sm" onClick={() => editIncome(income)} className="h-8 w-8 p-0">
+                        <Edit className="h-4 w-4 text-blue-500" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => deleteIncome(income.id)} className="h-8 w-8 p-0">
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {monthlyIncomes.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma entrada registrada</h3>
+                  <p className="text-sm text-gray-600 mb-4">Adicione suas primeiras entradas para começar a controlar suas receitas.</p>
+                </div>
+              )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Dialog de Edição */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl">Editar Entrada</DialogTitle>
+              <DialogDescription className="text-sm">Modifique os dados da entrada.</DialogDescription>
+            </DialogHeader>
+            {editingIncome && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-name" className="text-sm">Nome da Entrada</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingIncome.name}
+                    onChange={(e) => setEditingIncome({ ...editingIncome, name: e.target.value })}
+                    className="h-10 sm:h-11 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-amount" className="text-sm">Valor</Label>
+                  <Input
+                    id="edit-amount"
+                    type="number"
+                    step="0.01"
+                    value={editingIncome.amount}
+                    onChange={(e) => setEditingIncome({ ...editingIncome, amount: parseFloat(e.target.value) || 0 })}
+                    className="h-10 sm:h-11 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-category" className="text-sm">Categoria</Label>
+                  <Select
+                    value={editingIncome.category}
+                    onValueChange={(value) => setEditingIncome({ ...editingIncome, category: value })}
+                  >
+                    <SelectTrigger className="h-10 sm:h-11 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {incomeCategories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-date" className="text-sm">Data</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editingIncome.date}
+                    onChange={(e) => setEditingIncome({ ...editingIncome, date: e.target.value })}
+                    className="h-10 sm:h-11 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-observations" className="text-sm">Observações</Label>
+                  <Textarea
+                    id="edit-observations"
+                    value={editingIncome.observations || ""}
+                    onChange={(e) => setEditingIncome({ ...editingIncome, observations: e.target.value })}
+                    placeholder="Observações sobre a entrada..."
+                    rows={3}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button onClick={updateIncome} className="flex-1 h-10 sm:h-11 text-sm">
+                    Atualizar
+                  </Button>
+                  <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-10 sm:h-11 text-sm">
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Lista de Entradas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Entradas do Mês</CardTitle>
-          <CardDescription>Lista de todas as entradas registradas este mês</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {monthlyIncomes.map((income) => (
-              <div key={income.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-medium">{income.name}</h3>
-                    <Badge variant="secondary">{income.category}</Badge>
-                    {isOwnIncome(income.user_id) ? (
-                      <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
-                        Minha
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
-                        Parceiro
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{new Date(income.date).toLocaleDateString("pt-BR")}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <User className="h-3 w-3" />
-                      <span>Registrado por: {getUserNameById(income.user_id)}</span>
-                    </div>
-                  </div>
-                  {income.observations && (
-                    <div className="text-sm text-gray-500 mt-1">
-                      {income.observations}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-lg text-green-600">€ {income.amount.toFixed(2)}</span>
-                  <Button variant="ghost" size="sm" onClick={() => editIncome(income)}>
-                    <Edit className="h-4 w-4 text-blue-500" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteIncome(income.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {monthlyIncomes.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma entrada registrada</h3>
-                <p className="text-gray-600 mb-4">Adicione suas primeiras entradas para começar a controlar suas receitas.</p>
-                <Button onClick={() => setIsDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Primeira Entrada
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Dialog de Edição */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Entrada</DialogTitle>
-            <DialogDescription>Modifique os dados da entrada.</DialogDescription>
-          </DialogHeader>
-          {editingIncome && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-name">Nome da Entrada</Label>
-                <Input
-                  id="edit-name"
-                  value={editingIncome.name}
-                  onChange={(e) => setEditingIncome({ ...editingIncome, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-amount">Valor</Label>
-                <Input
-                  id="edit-amount"
-                  type="number"
-                  step="0.01"
-                  value={editingIncome.amount}
-                  onChange={(e) => setEditingIncome({ ...editingIncome, amount: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-category">Categoria</Label>
-                <Select
-                  value={editingIncome.category}
-                  onValueChange={(value) => setEditingIncome({ ...editingIncome, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {incomeCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="edit-date">Data</Label>
-                <Input
-                  id="edit-date"
-                  type="date"
-                  value={editingIncome.date}
-                  onChange={(e) => setEditingIncome({ ...editingIncome, date: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-observations">Observações</Label>
-                <Textarea
-                  id="edit-observations"
-                  value={editingIncome.observations || ""}
-                  onChange={(e) => setEditingIncome({ ...editingIncome, observations: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="flex space-x-2">
-                <Button onClick={updateIncome} className="flex-1">
-                  Salvar Alterações
-                </Button>
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 } 

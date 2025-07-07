@@ -715,33 +715,34 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Controle de Despesas</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <h2 className="text-xl sm:text-2xl font-bold">Controle de Despesas</h2>
         
         {/* Resumo das despesas por usuário */}
         {monthlyExpenses.length > 0 && (
-          <div className="flex space-x-4 text-sm">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm">
             {users.map(user => {
               const userExpenses = monthlyExpenses.filter(expense => expense.user_id === user.id)
               const userTotal = userExpenses.reduce((sum, expense) => sum + expense.amount, 0)
               return (
                 <div key={user.id} className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${user.id === user?.id ? 'bg-green-500' : 'bg-blue-500'}`}></div>
-                  <span className="font-medium">{user.name || user.email}:</span>
-                  <span className="text-gray-600">€{userTotal.toFixed(2)} ({userExpenses.length} despesas)</span>
+                  <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${user.id === user?.id ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+                  <span className="font-medium truncate">{user.name || user.email}:</span>
+                  <span className="text-gray-600">€{userTotal.toFixed(2)} ({userExpenses.length})</span>
                 </div>
               )
             })}
           </div>
         )}
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto text-sm">
                 <Plus className="h-4 w-4 mr-2" />
-                Nova Despesa
+                <span className="hidden sm:inline">Nova Despesa</span>
+                <span className="sm:hidden">Nova</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -835,9 +836,10 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
 
           <Dialog open={isUpcomingDialogOpen} onOpenChange={setIsUpcomingDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" className="w-full sm:w-auto text-sm">
                 <Clock className="h-4 w-4 mr-2" />
-                Despesa a Vencer
+                <span className="hidden sm:inline">Despesa a Vencer</span>
+                <span className="sm:hidden">A Vencer</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -957,15 +959,15 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
               {expensesDueSoon.map((expense) => {
                 const daysUntilDue = getDaysUntilDue(expense.due_date)
                 return (
-                  <div key={expense.id} className="flex justify-between items-center p-2 bg-white rounded border">
-                    <div>
-                      <span className="font-medium">{expense.name}</span>
-                      <span className="text-sm text-gray-600 ml-2">
+                  <div key={expense.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-2 bg-white rounded border space-y-2 sm:space-y-0">
+                    <div className="flex-1">
+                      <span className="font-medium text-sm sm:text-base">{expense.name}</span>
+                      <span className="text-xs sm:text-sm text-gray-600 ml-2">
                         - € {expense.amount.toFixed(2)} 
                         {daysUntilDue === 0 ? ' (hoje!)' : ` (${daysUntilDue} dias)`}
                       </span>
                     </div>
-                    <Button size="sm" onClick={() => markAsPaid(expense.id, expense)}>
+                    <Button size="sm" onClick={() => markAsPaid(expense.id, expense)} className="text-xs w-full sm:w-auto">
                       Marcar como Pago
                     </Button>
                   </div>
@@ -992,9 +994,9 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
                 <CardTitle>Gastos por Categoria</CardTitle>
                 <CardDescription>Distribuição dos gastos mensais</CardDescription>
               </CardHeader>
-              <CardContent>
-                <ChartContainer config={{}} className="h-[300px]">
-                  <PieChart width={533} height={300}>
+              <CardContent className="flex justify-center">
+                <ChartContainer config={{}} className="h-[300px] w-full">
+                  <PieChart width={400} height={300}>
                     <Pie
                       data={categoryData}
                       cx="50%"
@@ -1109,44 +1111,48 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
 
               <div className="space-y-4">
                 {filteredExpenses.slice(0, 10).map((expense) => (
-                  <div key={expense.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium">{expense.name}</h3>
-                        <Badge variant="secondary">{expense.category}</Badge>
-                        {isOwnExpense(expense.user_id) ? (
-                          <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
-                            Minha
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
-                            Parceiro
-                          </Badge>
-                        )}
+                  <div key={expense.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg space-y-3 sm:space-y-0">
+                    <div className="flex-1 space-y-2">
+                                              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                          <h3 className="font-semibold text-lg sm:text-xl">{expense.name}</h3>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary" className="text-xs">{expense.category}</Badge>
+                          {isOwnExpense(expense.user_id) ? (
+                            <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50 text-xs">
+                              Minha
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50 text-xs">
+                              Parceiro
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-600">
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-3 w-3" />
                           <span>{new Date(expense.date).toLocaleDateString("pt-BR")}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <User className="h-3 w-3" />
-                          <span>Pago por: {getUserNameById(expense.payer)}</span>
+                          <span className="truncate">Pago por: {getUserNameById(expense.payer)}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <UserPlus className="h-3 w-3" />
-                          <span>Criado por: {getUserFullNameById(expense.user_id)}</span>
+                          <span className="truncate">Criado por: {getUserFullNameById(expense.user_id)}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-lg">€ {expense.amount.toFixed(2)}</span>
-                      <Button variant="ghost" size="sm" onClick={() => editExpense(expense)}>
-                        <Edit className="h-4 w-4 text-blue-500" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteExpense(expense.id)}>
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                    <div className="flex items-center space-x-2 w-full sm:w-auto">
+                      <span className="font-bold text-base sm:text-lg">€ {expense.amount.toFixed(2)}</span>
+                      <div className="flex space-x-1">
+                        <Button variant="ghost" size="sm" onClick={() => editExpense(expense)} className="h-8 w-8 p-0">
+                          <Edit className="h-4 w-4 text-blue-500" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => deleteExpense(expense.id)} className="h-8 w-8 p-0">
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1189,34 +1195,36 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
                   const isDueSoon = daysUntilDue <= 3 && daysUntilDue >= 0
 
                   return (
-                    <div key={expense.id} className={`flex items-center justify-between p-4 border rounded-lg ${
+                    <div key={expense.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg space-y-3 sm:space-y-0 ${
                       isOverdue ? 'border-red-300 bg-red-50' : 
                       isDueSoon ? 'border-yellow-300 bg-yellow-50' : 
                       'border-gray-200'
                     }`}>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <h3 className="font-medium">{expense.name}</h3>
-                          <Badge variant="secondary">{expense.category}</Badge>
-                          {isOwnExpense(expense.user_id) ? (
-                            <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
-                              Minha
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
-                              Parceiro
-                            </Badge>
-                          )}
-                          {expense.is_monthly && (
-                            <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
-                              <Repeat className="h-3 w-3 mr-1" />
-                              Mensal
-                            </Badge>
-                          )}
-                          {isOverdue && <Badge variant="destructive">Vencida</Badge>}
-                          {isDueSoon && <Badge variant="outline" className="border-yellow-500 text-yellow-700">Vence em breve</Badge>}
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                          <h3 className="font-semibold text-lg sm:text-xl">{expense.name}</h3>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary" className="text-xs">{expense.category}</Badge>
+                            {isOwnExpense(expense.user_id) ? (
+                              <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50 text-xs">
+                                Minha
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50 text-xs">
+                                Parceiro
+                              </Badge>
+                            )}
+                            {expense.is_monthly && (
+                              <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50 text-xs">
+                                <Repeat className="h-3 w-3 mr-1" />
+                                Mensal
+                              </Badge>
+                            )}
+                            {isOverdue && <Badge variant="destructive" className="text-xs">Vencida</Badge>}
+                            {isDueSoon && <Badge variant="outline" className="border-yellow-500 text-yellow-700 text-xs">Vence em breve</Badge>}
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-3 w-3" />
                             <span>Vence: {new Date(expense.due_date).toLocaleDateString("pt-BR")}</span>
@@ -1231,25 +1239,27 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
                           </div>
                           <div className="flex items-center space-x-1">
                             <User className="h-3 w-3" />
-                            <span>Pago por: {getUserNameById(expense.payer)}</span>
+                            <span className="truncate">Pago por: {getUserNameById(expense.payer)}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <UserPlus className="h-3 w-3" />
-                            <span>Criado por: {getUserFullNameById(expense.user_id)}</span>
+                            <span className="truncate">Criado por: {getUserFullNameById(expense.user_id)}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-lg">€ {expense.amount.toFixed(2)}</span>
-                        <Button size="sm" onClick={() => markAsPaid(expense.id, expense)}>
-                          Pagar
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => editUpcomingExpense(expense)}>
-                          <Edit className="h-4 w-4 text-blue-500" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => deleteUpcomingExpense(expense.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
+                      <div className="flex items-center space-x-2 w-full sm:w-auto">
+                        <span className="font-bold text-base sm:text-lg">€ {expense.amount.toFixed(2)}</span>
+                        <div className="flex space-x-1">
+                          <Button size="sm" onClick={() => markAsPaid(expense.id, expense)} className="text-xs">
+                            Pagar
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => editUpcomingExpense(expense)} className="h-8 w-8 p-0">
+                            <Edit className="h-4 w-4 text-blue-500" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => deleteUpcomingExpense(expense.id)} className="h-8 w-8 p-0">
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )
