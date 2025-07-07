@@ -1,0 +1,493 @@
+"use client"
+
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Calendar, Clock, User, Repeat, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/components/auth-wrapper"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+interface MonthlyExpense {
+  id: string
+  name: string
+  amount: number
+  category: string
+  due_date: string
+  payer: string
+  user_id: string
+  is_paid: boolean
+  is_monthly: boolean
+  created_at: string
+}
+
+interface MonthlySummary {
+  month: string
+  monthName: string
+  year: number
+  total: number
+  expenses: MonthlyExpense[]
+  isCurrentMonth: boolean
+}
+
+export default function ResumoMensalPage() {
+  const { user, isDemoMode, isUsingSupabase } = useAuth()
+  const [upcomingExpenses, setUpcomingExpenses] = useState<MonthlyExpense[]>([])
+  const [monthlySummaries, setMonthlySummaries] = useState<MonthlySummary[]>([])
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(0)
+  const [users, setUsers] = useState<{ id: string; name?: string; email?: string }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Carregar dados iniciais
+  useEffect(() => {
+    const loadData = async () => {
+      console.log("=== INICIANDO CARREGAMENTO DE DADOS ===")
+      console.log("isDemoMode:", isDemoMode)
+      console.log("isUsingSupabase:", isUsingSupabase)
+      console.log("user:", user)
+      
+      setLoading(true)
+      
+      if (isDemoMode) {
+        console.log("Carregando dados de DEMO")
+        await loadDemoData()
+      } else if (isUsingSupabase && user) {
+        console.log("Carregando dados do SUPABASE")
+        await fetchUpcomingExpenses()
+        await fetchUsers()
+      } else {
+        console.log("Nenhuma condição atendida - não carregando dados")
+        console.log("isDemoMode:", isDemoMode)
+        console.log("isUsingSupabase:", isUsingSupabase)
+        console.log("user:", user)
+      }
+      
+      setLoading(false)
+      console.log("=== CARREGAMENTO FINALIZADO ===")
+    }
+
+    loadData()
+  }, [user, isDemoMode, isUsingSupabase])
+
+  // Gerar resumos quando as despesas mudarem
+  useEffect(() => {
+    if (!loading) {
+      generateMonthlySummaries()
+    }
+  }, [upcomingExpenses, loading])
+
+  const loadDemoData = async () => {
+    const demoData = localStorage.getItem("demo-upcoming-expenses")
+    if (demoData) {
+      const parsedData = JSON.parse(demoData)
+      setUpcomingExpenses(parsedData)
+    } else {
+      createDemoData()
+    }
+    
+    const demoUsers = [
+      { id: "demo-user-id", name: "Utilizador Principal" },
+      { id: "demo-user-2", name: "Parceiro(a)" }
+    ]
+    setUsers(demoUsers)
+  }
+
+  const createDemoData = () => {
+    const currentDate = new Date()
+    const demoExpenses = [
+      {
+        id: "demo-1",
+        name: "Aluguel",
+        amount: 1200,
+        category: "Moradia",
+        due_date: new Date(currentDate.getFullYear(), currentDate.getMonth(), 5).toISOString().split('T')[0],
+        payer: "demo-user-id",
+        user_id: "demo-user-id",
+        is_paid: false,
+        is_monthly: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: "demo-2",
+        name: "Conta de Luz",
+        amount: 150,
+        category: "Contas",
+        due_date: new Date(currentDate.getFullYear(), currentDate.getMonth(), 15).toISOString().split('T')[0],
+        payer: "demo-user-2",
+        user_id: "demo-user-id",
+        is_paid: false,
+        is_monthly: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: "demo-3",
+        name: "Internet",
+        amount: 89.90,
+        category: "Contas",
+        due_date: new Date(currentDate.getFullYear(), currentDate.getMonth(), 10).toISOString().split('T')[0],
+        payer: "demo-user-id",
+        user_id: "demo-user-id",
+        is_paid: false,
+        is_monthly: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: "demo-4",
+        name: "Seguro do Carro",
+        amount: 300,
+        category: "Transporte",
+        due_date: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 20).toISOString().split('T')[0],
+        payer: "demo-user-2",
+        user_id: "demo-user-id",
+        is_paid: false,
+        is_monthly: false,
+        created_at: new Date().toISOString()
+      }
+    ]
+    
+    localStorage.setItem("demo-upcoming-expenses", JSON.stringify(demoExpenses))
+    setUpcomingExpenses(demoExpenses)
+  }
+
+  const fetchUpcomingExpenses = async () => {
+    console.log("=== fetchUpcomingExpenses INICIADA ===")
+    
+    if (!user) {
+      console.log("❌ Usuário não autenticado - abortando busca")
+      return
+    }
+
+    console.log("✅ Usuário autenticado:", user.id)
+    console.log("🔍 Fazendo consulta no Supabase...")
+    
+    try {
+      const { data, error } = await supabase
+        .from("upcoming_expenses")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_paid", false)
+        .order("due_date", { ascending: true })
+
+      console.log("📊 Resultado da consulta Supabase:")
+      console.log("Data:", data)
+      console.log("Error:", error)
+
+      if (error) {
+        console.error("❌ Error fetching upcoming expenses:", error)
+        return
+      }
+
+      console.log("✅ Consulta bem-sucedida!")
+      console.log("📋 Dados brutos do Supabase:", data)
+      
+      // Converter valores de string para number se necessário
+      const processedData = data?.map(expense => ({
+        ...expense,
+        amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount
+      })) || []
+      
+      console.log("🔄 Despesas processadas:", processedData)
+      console.log("📈 Total de despesas carregadas:", processedData.length)
+      setUpcomingExpenses(processedData)
+      console.log("✅ Despesas salvas no estado")
+    } catch (error) {
+      console.error("❌ Erro ao buscar despesas:", error)
+    }
+    
+    console.log("=== fetchUpcomingExpenses FINALIZADA ===")
+  }
+
+  const fetchUsers = async () => {
+    if (!isUsingSupabase) return
+    
+    try {
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .order("full_name", { ascending: true })
+
+      if (error) {
+        console.error("Error fetching profiles:", error)
+        return
+      }
+
+      if (profiles && profiles.length > 0) {
+        const userOptions = profiles.map((profile) => ({
+          id: profile.id,
+          name: profile.full_name,
+        }))
+        setUsers(userOptions)
+      }
+    } catch (error) {
+      console.error("Error in fetchUsers:", error)
+    }
+  }
+
+  const getUserNameById = (userId: string) => {
+    const user = users.find(u => u.id === userId)
+    return user?.name || user?.email || userId
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(value)
+  }
+
+  const getMonthColor = (summary: MonthlySummary) => {
+    if (summary.isCurrentMonth) return "border-blue-500 bg-blue-50"
+    if (summary.total > 0) return "border-green-500 bg-green-50"
+    return "border-gray-200 bg-gray-50"
+  }
+
+  const generateMonthlySummaries = useCallback(() => {
+    console.log("Gerando resumos mensais com", upcomingExpenses.length, "despesas")
+    
+    const summaries: MonthlySummary[] = []
+    const currentDate = new Date()
+    const currentMonth = currentDate.getMonth()
+    const currentYear = currentDate.getFullYear()
+
+    // Gerar resumos para os próximos 12 meses
+    for (let i = 0; i < 12; i++) {
+      const targetDate = new Date(currentYear, currentMonth + i, 1)
+      const monthKey = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}`
+      const monthName = targetDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      
+      // Filtrar despesas para este mês específico
+      const monthExpenses = upcomingExpenses.filter(expense => {
+        const expenseDate = new Date(expense.due_date)
+        return expenseDate.getMonth() === targetDate.getMonth() && 
+               expenseDate.getFullYear() === targetDate.getFullYear()
+      })
+
+      console.log(`Mês ${monthName}: ${monthExpenses.length} despesas encontradas`)
+      
+      const total = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+      
+      summaries.push({
+        month: monthKey,
+        monthName,
+        year: targetDate.getFullYear(),
+        total,
+        expenses: monthExpenses,
+        isCurrentMonth: i === 0
+      })
+    }
+
+    console.log("Resumos gerados:", summaries.length, "meses")
+    setMonthlySummaries(summaries)
+  }, [upcomingExpenses])
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando resumo mensal...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Resumo Mensal</h1>
+          <p className="text-gray-600">Previsão de despesas para os próximos meses</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={() => window.history.back()}>
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+        </div>
+      </div>
+
+      {/* Estatísticas Gerais */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Próximos 12 Meses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(monthlySummaries.reduce((sum, month) => sum + month.total, 0))}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Média Mensal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {monthlySummaries.length > 0 
+                ? formatCurrency(monthlySummaries.reduce((sum, month) => sum + month.total, 0) / 12)
+                : formatCurrency(0)
+              }
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Despesas Mensais</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {upcomingExpenses.filter(exp => exp.is_monthly).length}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Debug Info */}
+      <Card className="bg-gray-50">
+        <CardHeader>
+          <CardTitle className="text-sm">Debug Info</CardTitle>
+        </CardHeader>
+        <CardContent className="text-xs space-y-1">
+          <div>Despesas carregadas: {upcomingExpenses.length}</div>
+          <div>Despesas mensais: {upcomingExpenses.filter(exp => exp.is_monthly).length}</div>
+          <div>Resumos gerados: {monthlySummaries.length}</div>
+          <div>Modo Demo: {isDemoMode ? 'Sim' : 'Não'}</div>
+          <div>Usando Supabase: {isUsingSupabase ? 'Sim' : 'Não'}</div>
+          <div>Usuário: {user?.id || 'Nenhum'}</div>
+          <div>Loading: {loading ? 'Sim' : 'Não'}</div>
+        </CardContent>
+      </Card>
+
+      {/* Navegação de Meses */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          onClick={() => setCurrentMonthIndex(Math.max(0, currentMonthIndex - 1))}
+          disabled={currentMonthIndex === 0}
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Mês Anterior
+        </Button>
+        
+        <h2 className="text-xl font-semibold">
+          {monthlySummaries[currentMonthIndex]?.monthName || "Carregando..."}
+        </h2>
+        
+        <Button
+          variant="outline"
+          onClick={() => setCurrentMonthIndex(Math.min(11, currentMonthIndex + 1))}
+          disabled={currentMonthIndex === 11}
+        >
+          Próximo Mês
+          <ChevronRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
+
+      {/* Detalhes do Mês Selecionado */}
+      {monthlySummaries[currentMonthIndex] && (
+        <Card className={getMonthColor(monthlySummaries[currentMonthIndex])}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>{monthlySummaries[currentMonthIndex].monthName}</CardTitle>
+                <CardDescription>
+                  {monthlySummaries[currentMonthIndex].expenses.length} despesa(s) programada(s)
+                </CardDescription>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold">
+                  {formatCurrency(monthlySummaries[currentMonthIndex].total)}
+                </div>
+                <div className="text-sm text-gray-600">Total do mês</div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {monthlySummaries[currentMonthIndex].expenses.length > 0 ? (
+                monthlySummaries[currentMonthIndex].expenses.map((expense) => (
+                  <div key={expense.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-medium">{expense.name}</h3>
+                        <Badge variant="secondary">{expense.category}</Badge>
+                        {expense.is_monthly && (
+                          <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
+                            <Repeat className="h-3 w-3 mr-1" />
+                            Mensal
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>Vence: {new Date(expense.due_date).toLocaleDateString("pt-BR")}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <User className="h-3 w-3" />
+                          <span>{getUserNameById(expense.payer)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-lg">
+                        {formatCurrency(expense.amount)}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma despesa programada</h3>
+                  <p className="text-gray-600">Este mês não possui despesas programadas.</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Visão Geral dos Próximos Meses */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Visão Geral dos Próximos 12 Meses</CardTitle>
+          <CardDescription>Resumo rápido de todos os meses</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {monthlySummaries.map((summary, index) => (
+              <div
+                key={summary.month}
+                className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                  index === currentMonthIndex 
+                    ? 'border-blue-500 bg-blue-100' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setCurrentMonthIndex(index)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">{summary.monthName}</h3>
+                  {summary.isCurrentMonth && (
+                    <Badge variant="secondary">Atual</Badge>
+                  )}
+                </div>
+                <div className="text-2xl font-bold text-green-600">
+                  {formatCurrency(summary.total)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {summary.expenses.length} despesa(s)
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+} 

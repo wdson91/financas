@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "id": "7d1571f9-ce4d-4afc-9f32-c724d25d9bec",
+      "email": "wdson91@gmail.com",
+      "password": "94019543",
+      "name": "Wdson"
+    },
+    {
+      "id": "58df3228-dc20-44de-8fd6-19f5682945a0", 
+      "email": "paloma-gomesandrade@gmail.com",
+      "password": "Senha122030",
+      "name": "Paloma"
+    }
+  ]
+} 
