@@ -37,7 +37,7 @@ interface GoalsTabProps {
 }
 
 export function GoalsTab({ onGoalChange }: GoalsTabProps) {
-  const { user, isDemoMode } = useAuth()
+  const { user } = useAuth()
   const [goals, setGoals] = useState<Goal[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newGoal, setNewGoal] = useState({

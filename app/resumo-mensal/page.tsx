@@ -32,33 +32,29 @@ interface MonthlySummary {
 }
 
 export default function ResumoMensalPage() {
-  const { user, isDemoMode, isUsingSupabase } = useAuth()
+  const { user, isUsingSupabase } = useAuth()
   const [upcomingExpenses, setUpcomingExpenses] = useState<MonthlyExpense[]>([])
   const [monthlySummaries, setMonthlySummaries] = useState<MonthlySummary[]>([])
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0)
   const [users, setUsers] = useState<{ id: string; name?: string; email?: string }[]>([])
   const [loading, setLoading] = useState(true)
 
+  
   // Carregar dados iniciais
   useEffect(() => {
     const loadData = async () => {
       console.log("=== INICIANDO CARREGAMENTO DE DADOS ===")
-      console.log("isDemoMode:", isDemoMode)
       console.log("isUsingSupabase:", isUsingSupabase)
       console.log("user:", user)
       
       setLoading(true)
       
-      if (isDemoMode) {
-        console.log("Carregando dados de DEMO")
-        await loadDemoData()
-      } else if (isUsingSupabase && user) {
+      if (isUsingSupabase && user) {
         console.log("Carregando dados do SUPABASE")
         await fetchUpcomingExpenses()
         await fetchUsers()
       } else {
         console.log("Nenhuma condição atendida - não carregando dados")
-        console.log("isDemoMode:", isDemoMode)
         console.log("isUsingSupabase:", isUsingSupabase)
         console.log("user:", user)
       }
@@ -68,7 +64,7 @@ export default function ResumoMensalPage() {
     }
 
     loadData()
-  }, [user, isDemoMode, isUsingSupabase])
+  }, [user, isUsingSupabase])
 
   // Gerar resumos quando as despesas mudarem
   useEffect(() => {
@@ -77,78 +73,7 @@ export default function ResumoMensalPage() {
     }
   }, [upcomingExpenses, loading])
 
-  const loadDemoData = async () => {
-    const demoData = localStorage.getItem("demo-upcoming-expenses")
-    if (demoData) {
-      const parsedData = JSON.parse(demoData)
-      setUpcomingExpenses(parsedData)
-    } else {
-      createDemoData()
-    }
-    
-    const demoUsers = [
-      { id: "demo-user-id", name: "Utilizador Principal" },
-      { id: "demo-user-2", name: "Parceiro(a)" }
-    ]
-    setUsers(demoUsers)
-  }
 
-  const createDemoData = () => {
-    const currentDate = new Date()
-    const demoExpenses = [
-      {
-        id: "demo-1",
-        name: "Aluguel",
-        amount: 1200,
-        category: "Moradia",
-        due_date: new Date(currentDate.getFullYear(), currentDate.getMonth(), 5).toISOString().split('T')[0],
-        payer: "demo-user-id",
-        user_id: "demo-user-id",
-        is_paid: false,
-        is_monthly: true,
-        created_at: new Date().toISOString()
-      },
-      {
-        id: "demo-2",
-        name: "Conta de Luz",
-        amount: 150,
-        category: "Contas",
-        due_date: new Date(currentDate.getFullYear(), currentDate.getMonth(), 15).toISOString().split('T')[0],
-        payer: "demo-user-2",
-        user_id: "demo-user-id",
-        is_paid: false,
-        is_monthly: true,
-        created_at: new Date().toISOString()
-      },
-      {
-        id: "demo-3",
-        name: "Internet",
-        amount: 89.90,
-        category: "Contas",
-        due_date: new Date(currentDate.getFullYear(), currentDate.getMonth(), 10).toISOString().split('T')[0],
-        payer: "demo-user-id",
-        user_id: "demo-user-id",
-        is_paid: false,
-        is_monthly: true,
-        created_at: new Date().toISOString()
-      },
-      {
-        id: "demo-4",
-        name: "Seguro do Carro",
-        amount: 300,
-        category: "Transporte",
-        due_date: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 20).toISOString().split('T')[0],
-        payer: "demo-user-2",
-        user_id: "demo-user-id",
-        is_paid: false,
-        is_monthly: false,
-        created_at: new Date().toISOString()
-      }
-    ]
-    
-    localStorage.setItem("demo-upcoming-expenses", JSON.stringify(demoExpenses))
-    setUpcomingExpenses(demoExpenses)
-  }
 
   const fetchUpcomingExpenses = async () => {
     console.log("=== fetchUpcomingExpenses INICIADA ===")
@@ -356,7 +281,7 @@ export default function ResumoMensalPage() {
           <div>Despesas carregadas: {upcomingExpenses.length}</div>
           <div>Despesas mensais: {upcomingExpenses.filter(exp => exp.is_monthly).length}</div>
           <div>Resumos gerados: {monthlySummaries.length}</div>
-          <div>Modo Demo: {isDemoMode ? 'Sim' : 'Não'}</div>
+          
           <div>Usando Supabase: {isUsingSupabase ? 'Sim' : 'Não'}</div>
           <div>Usuário: {user?.id || 'Nenhum'}</div>
           <div>Loading: {loading ? 'Sim' : 'Não'}</div>

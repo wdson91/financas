@@ -8,25 +8,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Heart, Play, AlertTriangle } from "lucide-react"
+import { Heart, AlertTriangle } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 interface LoginFormProps {
-  onEnableDemoMode: () => void
   authError?: string | null
 }
 
 export function LoginForm({ 
-  onEnableDemoMode, 
   authError
 }: LoginFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
-  // Removido - agora só usa Supabase
-
-  // Removido - só usa Supabase agora
 
   const handleSupabaseSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,37 +81,15 @@ export function LoginForm({
           <CardDescription>Gerencie suas finanças e listas de compras juntos</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Demo Mode Button */}
-          <div className="text-center">
-            <Button
-              onClick={onEnableDemoMode}
-              variant="outline"
-              className="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white border-0 hover:from-blue-600 hover:to-green-600"
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Experimentar Modo Demo
-            </Button>
-            <p className="text-xs text-gray-500 mt-2">Explore todas as funcionalidades sem precisar criar conta</p>
-          </div>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Ou faça login</span>
-            </div>
-          </div>
-
           {/* Auth Error Alert */}
           {authError && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{authError}. Você pode usar o modo demo enquanto isso.</AlertDescription>
+              <AlertDescription>{authError}</AlertDescription>
             </Alert>
           )}
 
-                    {/* Supabase Login/Signup */}
+          {/* Supabase Login/Signup */}
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Entrar</TabsTrigger>
@@ -133,7 +106,7 @@ export function LoginForm({
                     value={email} 
                     onChange={(e) => setEmail(e.target.value)} 
                     required 
-                    placeholder="wdson91@gmail.com"
+                    placeholder="seu@email.com"
                   />
                 </div>
                 <div className="space-y-2">
@@ -144,7 +117,7 @@ export function LoginForm({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    placeholder="94019543"
+                    placeholder="Digite sua senha"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -171,7 +144,7 @@ export function LoginForm({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    placeholder="wdson91@gmail.com"
+                    placeholder="seu@email.com"
                   />
                 </div>
                 <div className="space-y-2">
@@ -183,7 +156,7 @@ export function LoginForm({
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    placeholder="94019543"
+                    placeholder="Mínimo 6 caracteres"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -191,25 +164,22 @@ export function LoginForm({
                 </Button>
               </form>
 
-              {/* Sugestão de credenciais */}
+              {/* Informações sobre cadastro */}
               <div className="mt-4 p-3 bg-blue-50 rounded-md">
                 <p className="text-xs text-blue-700 text-center">
-                  <strong>Sugestão:</strong><br />
-                  E-mail: wdson91@gmail.com<br />
-                  Senha: 94019543 (mínimo 6 caracteres)
+                  <strong>Importante:</strong><br />
+                  • A senha deve ter pelo menos 6 caracteres<br />
+                  • Você receberá um e-mail de confirmação
                 </p>
               </div>
             </TabsContent>
           </Tabs>
 
+          {/* Message Display */}
           {message && (
-            <div className={`mt-4 p-3 text-sm text-center rounded-md ${
-              message.includes('sucesso') 
-                ? 'bg-green-50 text-green-700' 
-                : 'bg-red-50 text-red-700'
-            }`}>
-              {message}
-            </div>
+            <Alert variant={message.includes("sucesso") ? "default" : "destructive"}>
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>

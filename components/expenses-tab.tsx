@@ -81,7 +81,7 @@ interface UserOption {
 }
 
 export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTabProps) {
-  const { user, isDemoMode, isUsingSupabase } = useAuth()
+  const { user, isUsingSupabase } = useAuth()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [upcomingExpenses, setUpcomingExpenses] = useState<UpcomingExpense[]>([])
   const [users, setUsers] = useState<UserOption[]>([])
@@ -114,11 +114,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     // Carregar sugestões do histórico
     setExpenseSuggestions(expenseHistory.getExpenseNames())
     
-    if (isDemoMode) {
-      loadDemoExpenses()
-      loadDemoUpcomingExpenses()
-      loadDemoUsers()
-    } else if (isUsingSupabase) {
+    if (isUsingSupabase) {
       fetchExpenses()
       fetchUpcomingExpenses()
       fetchUsers()
@@ -128,7 +124,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       setUpcomingExpenses([])
       loadDemoUsers() // Usar usuários demo mesmo no sistema simples
     }
-      }, [user, isDemoMode, isUsingSupabase])
+      }, [user, isUsingSupabase])
 
   const loadDemoExpenses = () => {
     const demoData = localStorage.getItem("demo-expenses")
@@ -297,7 +293,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     }
 
     // Validação adicional para UUID quando usando Supabase
-    if (isUsingSupabase && !isDemoMode) {
+    if (isUsingSupabase) {
       // Verificar se o payer é um UUID válido
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       if (!uuidRegex.test(newExpense.payer)) {
@@ -320,17 +316,8 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
       observations: newExpense.observations,
     }
 
-    // Adicionar ID apenas para modo demo
-    if (isDemoMode) {
-      expense.id = Date.now().toString()
-    }
-
-    if (isDemoMode) {
-      const updatedExpenses = [expense, ...expenses]
-      setExpenses(updatedExpenses)
-      localStorage.setItem("demo-expenses", JSON.stringify(updatedExpenses))
-          } else if (isUsingSupabase) {
-        const { error } = await supabase.from("expenses").insert([expense])
+    if (isUsingSupabase) {
+      const { error } = await supabase.from("expenses").insert([expense])
       if (error) {
         console.error("Error adding expense:", error)
         return
@@ -360,7 +347,7 @@ export function ExpensesTab({ onTotalChange, onPendingTotalChange }: ExpensesTab
     }
 
     // Validação adicional para UUID quando usando Supabase
-    if (isUsingSupabase && !isDemoMode) {
+    if (isUsingSupabase) {
       // Verificar se o payer é um UUID válido
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       if (!uuidRegex.test(newUpcomingExpense.payer)) {

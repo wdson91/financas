@@ -2,56 +2,33 @@
 
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
-import type { SimpleUser } from "@/lib/simple-auth"
 import { LoginForm } from "@/components/login-form"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import type { User } from "@supabase/supabase-js"
 
 interface AuthContextType {
-  user: SimpleUser | User | null
+  user: User | null
   loading: boolean
-  isDemoMode: boolean
   isUsingSupabase: boolean
 }
 
 const AuthContext = createContext<AuthContextType>({ 
   user: null, 
   loading: true, 
-  isDemoMode: false,
   isUsingSupabase: true
 })
 
 export const useAuth = () => useContext(AuthContext)
 
-// Demo user for testing
-const DEMO_USER: SimpleUser = {
-  id: "demo-user-id",
-  email: "demo@financas-casal.com",
-  name: "Usuário Demo"
-}
-
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<SimpleUser | User | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isDemoMode, setIsDemoMode] = useState(false)
   const [isUsingSupabase, setIsUsingSupabase] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
     console.log("=== AUTH WRAPPER USEEFFECT ===")
     
-    // Check if we're in demo mode from localStorage
-    const demoMode = localStorage.getItem("demo-mode") === "true"
-    console.log("Demo mode from localStorage:", demoMode)
-    
-    if (demoMode) {
-      console.log("Ativando modo DEMO")
-      setUser(DEMO_USER)
-      setIsDemoMode(true)
-      setLoading(false)
-      return
-    }
-
     // Check if Supabase is configured - if yes, use it by default
     const useSupabase = isSupabaseConfigured()
     console.log("useSupabase detected:", useSupabase)
@@ -108,15 +85,6 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }
 
-  const enableDemoMode = () => {
-    localStorage.setItem("demo-mode", "true")
-    setUser(DEMO_USER)
-    setIsDemoMode(true)
-    setIsUsingSupabase(false)
-  }
-
-  // Removidas - só usa Supabase agora
-
   const logout = async () => {
     if (isUsingSupabase) {
       try {
@@ -127,8 +95,6 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     }
     
     setUser(null)
-    setIsDemoMode(false)
-    localStorage.removeItem("demo-mode")
   }
 
   if (loading) {
@@ -145,14 +111,13 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
   if (!user) {
     return (
       <LoginForm 
-        onEnableDemoMode={enableDemoMode}
         authError={authError}
       />
     )
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isDemoMode, isUsingSupabase }}>
+    <AuthContext.Provider value={{ user, loading, isUsingSupabase }}>
       {children}
     </AuthContext.Provider>
   )

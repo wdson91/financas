@@ -4,8 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { PiggyBank, ShoppingCart, TrendingUp, Target, DollarSign, User, LogOut, Play, Clock, Calendar } from "lucide-react"
+
+import { PiggyBank, ShoppingCart, TrendingUp, Target, DollarSign, User, LogOut, Clock, Calendar } from "lucide-react"
 import { ExpensesTab } from "@/components/expenses-tab"
 import { GoalsTab } from "@/components/goals-tab"
 import { ShoppingListTab } from "@/components/shopping-list-tab"
@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/components/auth-wrapper"
 
 export function DashboardContent() {
-  const { user, isDemoMode } = useAuth()
+  const { user } = useAuth()
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [pendingTotal, setPendingTotal] = useState(0)
   const [monthlyGoal, setMonthlyGoal] = useState(3000)
@@ -21,12 +21,7 @@ export function DashboardContent() {
 
   const handleSignOut = async () => {
     try {
-      if (isDemoMode) {
-        localStorage.removeItem("demo-mode")
-        window.location.reload()
-      } else {
-        await supabase.auth.signOut()
-      }
+      await supabase.auth.signOut()
     } catch (err) {
       console.error("Error signing out:", err)
       // Force reload as fallback
@@ -48,12 +43,7 @@ export function DashboardContent() {
             <div className="flex items-center space-x-2">
               <PiggyBank className="h-8 w-8 text-blue-600" />
               <h1 className="text-xl font-bold text-gray-900">Finanças do Casal</h1>
-              {isDemoMode && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  <Play className="h-3 w-3 mr-1" />
-                  Modo Demo
-                </Badge>
-              )}
+
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -69,20 +59,7 @@ export function DashboardContent() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Demo Mode Notice */}
-        {isDemoMode && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Play className="h-5 w-5 text-blue-600" />
-              <div>
-                <h3 className="font-medium text-blue-900">Modo Demonstração Ativo</h3>
-                <p className="text-sm text-blue-700">
-                  Você está explorando o aplicativo em modo demo. Os dados não serão salvos permanentemente.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Dashboard Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

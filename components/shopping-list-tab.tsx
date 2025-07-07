@@ -45,7 +45,7 @@ interface ShoppingListTabProps {
 }
 
 export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
-  const { user, isDemoMode } = useAuth()
+  const { user } = useAuth()
   const [items, setItems] = useState<ShoppingItem[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newItem, setNewItem] = useState({
@@ -55,49 +55,14 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
   })
 
   useEffect(() => {
-    if (isDemoMode) {
-      loadDemoItems()
-    } else {
-      fetchItems()
-    }
-  }, [user, isDemoMode])
-
-  const loadDemoItems = () => {
-    const demoData = localStorage.getItem("demo-shopping")
-    if (demoData) {
-      setItems(JSON.parse(demoData))
-    } else {
-      // Set some demo data
-      const sampleItems = [
-        {
-          id: "1",
-          name: "Leite",
-          quantity: 2,
-          category: "Laticínios",
-          completed: false,
-          user_id: "demo",
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          name: "Pão",
-          quantity: 1,
-          category: "Padaria",
-          completed: true,
-          user_id: "demo",
-          created_at: new Date().toISOString(),
-        },
-      ]
-      setItems(sampleItems)
-      localStorage.setItem("demo-shopping", JSON.stringify(sampleItems))
-    }
-  }
+    fetchItems()
+  }, [user])
 
   const addItem = async () => {
     if (!user || !newItem.name) return
 
     const item = {
-      id: isDemoMode ? Date.now().toString() : "",
+      id: "",
       name: newItem.name,
       quantity: Number.parseInt(newItem.quantity) || 1,
       category: newItem.category || "Outros",
@@ -106,77 +71,39 @@ export function ShoppingListTab({ onItemsChange }: ShoppingListTabProps) {
       created_at: new Date().toISOString(),
     }
 
-    if (isDemoMode) {
-      const updatedItems = [item, ...items]
-      setItems(updatedItems)
-      localStorage.setItem("demo-shopping", JSON.stringify(updatedItems))
-    } else {
-      const { error } = await supabase.from("shopping_items").insert([item])
-      if (error) {
-        console.error("Error adding item:", error)
-        return
-      }
+    const { error } = await supabase.from("shopping_items").insert([item])
+    if (error) {
+      console.error("Error adding item:", error)
+      return
     }
-
     setNewItem({ name: "", quantity: "1", category: "" })
     setIsDialogOpen(false)
+    fetchItems()
   }
 
   const toggleItem = async (id: string, completed: boolean) => {
-    if (isDemoMode) {
-      const updatedItems = items.map((item) => (item.id === id ? { ...item, completed } : item))
-      setItems(updatedItems)
-      localStorage.setItem("demo-shopping", JSON.stringify(updatedItems))
-    } else {
-      const { error } = await supabase.from("shopping_items").update({ completed }).eq("id", id)
-      if (error) {
-        console.error("Error updating item:", error)
-      }
+    const { error } = await supabase.from("shopping_items").update({ completed }).eq("id", id)
+    if (error) {
+      console.error("Error updating item:", error)
     }
+    fetchItems()
   }
 
   const deleteItem = async (id: string) => {
-    if (isDemoMode) {
-      const updatedItems = items.filter((item) => item.id !== id)
-      setItems(updatedItems)
-      localStorage.setItem("demo-shopping", JSON.stringify(updatedItems))
-    } else {
-      const { error } = await supabase.from("shopping_items").delete().eq("id", id)
-      if (error) {
-        console.error("Error deleting item:", error)
-      }
+    const { error } = await supabase.from("shopping_items").delete().eq("id", id)
+    if (error) {
+      console.error("Error deleting item:", error)
     }
+    fetchItems()
   }
 
   const clearCompleted = async () => {
-    if (isDemoMode) {
-      const updatedItems = items.filter((item) => !item.completed)
-      setItems(updatedItems)
-      localStorage.setItem("demo-shopping", JSON.stringify(updatedItems))
-    } else {
-      const { error } = await supabase.from("shopping_items").delete().eq("user_id", user?.id).eq("completed", true)
-      if (error) {
-        console.error("Error clearing completed items:", error)
-      }
+    const { error } = await supabase.from("shopping_items").delete().eq("user_id", user?.id).eq("completed", true)
+    if (error) {
+      console.error("Error clearing completed items:", error)
     }
+    fetchItems()
   }
-
-  // Remove the real-time subscription setup for demo mode
-  useEffect(() => {
-    if (isDemoMode) return
-
-    // Set up real-time subscription only for non-demo mode
-    const subscription = supabase
-      .channel("shopping_items")
-      .on("postgres_changes", { event: "*", schema: "public", table: "shopping_items" }, () => {
-        fetchItems()
-      })
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [isDemoMode])
 
   useEffect(() => {
     const pendingItems = items.filter((item) => !item.completed).length
